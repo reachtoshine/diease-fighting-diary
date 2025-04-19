@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>병명 검색 선택</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>💊 병명 입력</h1>
+    
+    <input type="text" id="searchInput" placeholder="여기를 눌러 검색 방식 선택" readonly />
+    
+    <ul id="results"></ul>
+  </div>
+
+  <!-- 팝업 -->
+  <div id="popup" class="popup hidden">
+    <div class="popup-content">
+      <p>검색 방식을 선택하세요</p>
+      <button onclick="setSearchMode('name')">병명으로 검색</button>
+      <button onclick="setSearchMode('code')">질병코드로 검색</button>
+      <button onclick="closePopup()">닫기</button>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
