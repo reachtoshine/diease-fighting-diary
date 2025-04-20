@@ -1,13 +1,17 @@
 const searchInput = document.getElementById("searchInput");
 const results = document.getElementById("results");
 const popup = document.getElementById("popup");
+let first = null;
 
 let searchMode = null;
 
 // 팝업 열기
-searchInput.addEventListener("click", () => {
-  popup.classList.remove("hidden");
-});
+if (first === null) {
+  searchInput.addEventListener("click", () => {
+    popup.classList.remove("hidden");
+    first = true
+  });
+}
 
 // 팝업 닫기
 function closePopup() {
@@ -34,26 +38,26 @@ searchInput.addEventListener("input", async () => {
 
   let url = "";
   if (searchMode === "name") {
-    url = `https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey=9jWsdcJJtTH%2FYu8xzkqAZk72R8HNcZPTG4z1A2PbCvRcOhZ4Hlwnyquk8Z34Ea2kgahuKjnAlzl4gkveRzcsJA%3D%3D&numOfRows=1&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_NM&searchText=${query}`;
+    url = `https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey=9jWsdcJJtTH%2FYu8xzkqAZk72R8HNcZPTG4z1A2PbCvRcOhZ4Hlwnyquk8Z34Ea2kgahuKjnAlzl4gkveRzcsJA%3D%3D&numOfRows=20&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_NM&searchText=${query}`;
   } else if (searchMode === "code") {
-    url = `https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey=9jWsdcJJtTH%2FYu8xzkqAZk72R8HNcZPTG4z1A2PbCvRcOhZ4Hlwnyquk8Z34Ea2kgahuKjnAlzl4gkveRzcsJA%3D%3D&numOfRows=1&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_CD&searchText=${query}`;
+    url = `https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey=9jWsdcJJtTH%2FYu8xzkqAZk72R8HNcZPTG4z1A2PbCvRcOhZ4Hlwnyquk8Z34Ea2kgahuKjnAlzl4gkveRzcsJA%3D%3D&numOfRows=20&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_CD&searchText=${query}`;
   } else {
     return;
   }
 
   try {
     const res = await fetch(url);
-    const textData = await res.text(); // XML 데이터를 텍스트로 가져옴
+    const textData = await res.text();
     const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(textData, "application/xml"); // XML로 파싱
+    const xmlDoc = parser.parseFromString(textData, "application/xml");
 
-    // 'items'의 'item'에서 sickNm 항목 추출
     const items = xmlDoc.getElementsByTagName("item");
     if (items.length > 0) {
       results.innerHTML = Array.from(items).map(item => {
         const sickNM = item.getElementsByTagName("sickNm")[0]?.textContent || "정보 없음";
         const sickCd = item.getElementsByTagName("sickCd")[0]?.textContent || "정보 없음";
-        return `<li><strong>${sickNM}</strong> - ${sickCd}</li>`;
+        return `<li onclick="goToResultPage('${encodeURIComponent(sickCd)}', '${encodeURIComponent(sickNM)}')"><strong>${sickNM}</strong> - ${sickCd}</li>`;
+
       }).join("");
     } else {
       results.innerHTML = "<li>검색 결과가 없습니다.</li>";
@@ -63,3 +67,9 @@ searchInput.addEventListener("input", async () => {
     results.innerHTML = "<li>API 오류 발생</li>";
   }
 });
+
+// 검색 결과 클릭 시 메시지 이동
+function goToResultPage(sickCode, SickName) {
+  let a = sickCode.charAt(0)
+  window.location.href = `next?Code=${a}&Name=${String(SickName)}`;
+}

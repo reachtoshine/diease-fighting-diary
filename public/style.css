@@ -72,3 +72,51 @@ li {
 .hidden {
   display: none;
 }
+
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: #333;
+}
+.popup-content {
+  position: relative; /* 이거 있어야 X 위치 잡힘 */
+}
+
+label {
+  display: block;
+  margin-top: 16px;
+  font-weight: bold;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  font-size: 1em;
+  margin-top: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+button {
+  margin-top: 24px;
+  padding: 12px 20px;
+  font-size: 1em;
+  border: none;
+  border-radius: 8px;
+  background-color: #28a745;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #218838;
+}
