@@ -8,23 +8,57 @@
 </head>
 <body>
   <div class="container">
-    <h1>💊 병명 입력</h1>
-    
-    <input type="text" id="searchInput" placeholder="여기를 눌러 검색 방식 선택" readonly />
-    
-    <ul id="results"></ul>
-  </div>
-
-  <!-- 팝업 -->
-  <div id="popup" class="popup hidden">
-    <div class="popup-content">
-      <p>검색 방식을 선택하세요</p>
-      <button onclick="setSearchMode('name')">병명으로 검색</button>
-      <button onclick="setSearchMode('code')">질병코드로 검색</button>
-      <span class="close-button" onclick="closePopup()">&times;</span>
+    <h1>🧬 암 종류 검색</h1>
+  
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <input type="text" id="searchInput" placeholder="암 종류를 입력하세요..." />
+      <button id="editBtn" class="hidden">✏️</button>
     </div>
-  </div>
+  
+    <ul id="results"></ul>
+  
+    <div id="extraOptions" class="hidden">
+      <label for="stageSelect">기수 선택</label>
+      <select id="stageSelect">
+        <option value="">선택하세요</option>
+        <option value="1기">1기</option>
+        <option value="2기">2기</option>
+        <option value="3기">3기</option>
+        <option value="4기">4기</option>
+        <option value="모름">모름</option>
+      </select>
+  
+      <label for="Susul">수술 여부</label>
+      <select id="Susul">
+        <option value="">선택하세요</option>
+        <option value="수술 전">수술 전</option>
+        <option value="수술 후">수술 후</option>
+      </select>
+      <label for="Hangam">항암 여부</label>
+      <select id="Hangam">
+        <option value="">선택하세요</option>
+        <option value="항암 있음-선항암-후수술">항암 있음-선항암 후수술</option>
+        <option value="항암 있음-선수술-후항암">항암 있음-선수술 후항암</option>
+        <option value="항암 없음">항암 없음</option>
+        <option value="항암 없음">모름</option>
+      </select>
+    </div>
+    <button id="nextBtn" onclick="checkSelections()">다음 단계로</button>
+    <script>
+      function checkSelections() {
+      const stageSelect = document.getElementById('stageSelect').value;
+      const susulSelect = document.getElementById('Susul').value;
+      const hangamSelect = document.getElementById('Hangam').value;
 
+      if (stageSelect && susulSelect && hangamSelect) {
+        window.location.href = '/home';
+      } else {
+        alert('모든 항목목을 선택해주세요.');
+      }
+      }
+    </script>
+  </div>
+  
   <script src="main.js"></script>
 </body>
 </html>

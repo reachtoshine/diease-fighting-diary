@@ -23,6 +23,7 @@ input {
   border-radius: 8px;
   cursor: pointer;
   background: #f9f9f9;
+  height: 20px;
 }
 
 ul {
@@ -117,6 +118,42 @@ button {
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #218838;
+#editBtn {
+  height: 47px;
+  width: 47px;
+  padding: 0;
+  font-size: 18px;
+  background: #ddd;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  top: -1px;
+  margin-top: 0;
+  margin-bottom: 11px;
+  position: relative;
+  display: flex;
+}
+
+#editBtn:hover {
+  background: #bbb;
+}
+
+#nextBtn {
+  height: 47px;
+  width: 100px;
+  padding: 0;
+  font-size: 18px;
+  background: #ddd;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 11px;
+  display: flex;
+  color: black;
+  font-weight: bold;
 }

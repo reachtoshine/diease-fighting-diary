@@ -20,3 +20,7 @@ app.get('/next', (req, res) => {
     const sickName = req.query.Name;
     res.render('next.ejs', { Code : sickCode, Name : sickName });
 });
+
+app.get('/home', (req, res) => {
+    res.send("OK")
+});
