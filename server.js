@@ -46,60 +46,31 @@ passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) =
   }
 }))
 
-// passport.use(new NaverStrategy({
-//   clientID: process.env.NAVER_CLIENT_ID,
-//   clientSecret: process.env.NAVER_CLIENT_SECRET,
-//   callbackURL: process.env.CALLBACK_URL,
-// }, async (accessToken, refreshToken, profile, done) => {
-//   console.log(profile);
-//   const userData = {
-//     username: profile.id,
-//     name: profile._json.name,
-//     email: profile._json.email,
-//     provider: 'naver'
-//   };
-
-//   try {
-//     let user = await db.collection('users').findOne({ username: userData.username });
-//     if (!user) {
-//       // 새 유저면 DB에 저장
-//       await db.collection('users').insertOne(userData);
-//       console.log(userData)
-//     }
-//     return done(null, user || userData);
-//   } catch (err) {
-//     return done(err);
-//   }
-// }));
-
-
 passport.use(new NaverStrategy({
   clientID: process.env.NAVER_CLIENT_ID,
   clientSecret: process.env.NAVER_CLIENT_SECRET,
   callbackURL: process.env.CALLBACK_URL,
-},
-function(accessToken, refreshToken, profile, done) {
-  User.findOne({
-      'naver.id': profile.id
-  }, function(err, user) {
-      if (!user) {
-          user = new User({
-              name: profile.displayName,
-              email: profile.emails[0].value,
-              username: profile.displayName,
-              provider: 'naver',
-              naver: profile._json
-          });
-          user.save(function(err) {
-              if (err) console.log(err);
-              return done(err, user);
-          });
-      } else {
-          return done(err, user);
-      }
-  });
-}
-));
+}, async (accessToken, refreshToken, profile, done) => {
+  console.log(profile);
+  const userData = {
+    username: profile.id,
+    name: profile._json.name,
+    email: profile._json.email,
+    provider: 'naver'
+  };
+
+  try {
+    let user = await db.collection('users').findOne({ username: userData.username });
+    if (!user) {
+      // 새 유저면 DB에 저장
+      await db.collection('users').insertOne(userData);
+      console.log(userData)
+    }
+    return done(null, user || userData);
+  } catch (err) {
+    return done(err);
+  }
+}));
 
 
 passport.serializeUser((user, done) => {
