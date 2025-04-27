@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="container login-container">
+    <h2>🔐 로그인</h2>
+
+    <form action="/login" method="POST">
+      <label for="username">이메일 또는 아이디</label>
+      <input type="text" id="username" name="username" placeholder="example@email.com" required />
+
+      <label for="password">비밀번호</label>
+      <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required />
+
+      <button type="submit">로그인</button>
+      <div>
+        <h5 class="or">――― or ―――</h5>
+        <a href="/callback/naver">
+          <img src="/lg.png" class="naver-login" alt="네이버로 로그인" />
+      </a>
+      </div>
+    </form>
+
+    <div class="login-links">
+      <a href="/register">회원가입</a>
+      <span>|</span>
+      <a href="/forgot-password">비밀번호 찾기</a>
+    </div>
+  </div>
+</body>
+</html>
