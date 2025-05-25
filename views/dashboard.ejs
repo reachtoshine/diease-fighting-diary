@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="container login-container">
+
+<% if (showCancerPopup) { %>
+  <div class="popup">
+    <p>🧬 <strong><%= user.nickname %></strong>님, 아직 암 관련 정보를 입력하지 않으셨어요.<br>간단한 정보를 기록해 주세요!</p>
+    <a href="/cancer-info" class="btn-popup">입력하러 가기</a>
+  </div>
+<% } %>
+
+<section>
+  <h2>대시보드 내용</h2>
+  <!-- 여기에 진짜 대시보드 구성 들어감 -->
+</section>
+
+
+  </div>
+</body>
+</html>

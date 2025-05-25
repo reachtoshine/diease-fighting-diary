@@ -106,6 +106,7 @@ new MongoClient(url).connect().then((client)=>{
   console.log(err)
 })
 
+
 app.get('/', (req, res) => {
     if (req.user) {
         res.redirect('/home');
@@ -181,4 +182,147 @@ app.get('/callback/naver', passport.authenticate('naver', { failureRedirect: '/l
 
 app.get('/naver/next', (req, res) => {
   res.redirect('/');
+});
+
+app.get('/dashboard', async (req, res) => {
+  if (!req.user) {
+    return res.redirect('/login');
+  } else {
+      const userId = req.user._id;
+
+  const userdata = await db.collection('userdata').findOne({ userId: userId });
+
+  const showCancerPopup = !userdata; // 정보 없으면 true
+
+  res.render('dashboard', {
+    user: req.user,
+    showCancerPopup
+  });
+  }
+});
+
+app.get('/cancer-info', async (req, res) => {
+  if (!req.user) {
+    return res.redirect('/login');
+  }
+  const userId = req.user._id;
+  const userdata = await db.collection('userdata').findOne({ userId: userId });
+  if (userdata) {
+    return res.redirect('/dashboard');
+  } else{
+    res.render('cancer-info.ejs', {
+      user: req.user
+    });
+  }
+});
+
+app.get('/cancer-info/confirm', async (req, res) => {
+  if (!req.user) {
+    return res.redirect('/login');
+  }
+  const userId = req.user._id;
+  const userdata = await db.collection('userdata').findOne({ userId: userId });
+  if (userdata) {
+    return res.redirect('/dashboard');
+  } else{
+    let cancer = req.query.cancer;
+    let stage = req.query.stage;
+    let operation = req.query.susul;
+    let hangam = req.query.hangam;
+
+    await db.collection('userdata').insertOne({
+      userId: userId,
+      cancer: cancer,
+      stage: stage,
+      operation: operation,
+      hangam: hangam});
+    res.redirect('/dashboard');
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.use((req, res, next) => {
+  res.status(404).send(`
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>페이지를 찾을 수 없습니다</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="/style.css">
+      <style>
+        body {
+          font-family: sans-serif;
+          background: #f9f9f9;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+          text-align: center;
+        }
+
+        h1 {
+          font-size: 2em;
+          color: #333;
+          margin-bottom: 10px;
+        }
+
+        p {
+          color: #666;
+          font-size: 1.1em;
+          margin-bottom: 24px;
+        }
+
+        a {
+          display: inline-block;
+          background: #4e73df;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: bold;
+        }
+
+        a:hover {
+          background: #2c5de5;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>😢 페이지를 찾을 수 없습니다</h1>
+      <p>요청하신 페이지가 존재하지 않거나 이동되었어요.</p>
+      <a href="/">홈으로 돌아가기</a>
+    </body>
+    </html>
+  `);
 });
