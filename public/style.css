@@ -98,12 +98,13 @@ label {
 }
 
 select {
-  width: 100%;
-  padding: 10px;
+  width: 98%;
+  padding: 12px;
   font-size: 1em;
-  margin-top: 8px;
+  margin-bottom: 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
+  cursor: pointer;
   background: #f9f9f9;
 }
 
@@ -231,3 +232,9 @@ button {
   color: #292929;
   font-family: 'Sans-serif', sans-serif;
 }
+
+body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+header { background: #4e73df; color: white; padding: 10px; border-radius: 8px; }
+.status-box span { margin-right: 15px; font-size: 1.2em; }
+section { margin-top: 20px; background: white; padding: 15px; border-radius: 8px; }
+input[type="checkbox"] { margin-right: 10px; }

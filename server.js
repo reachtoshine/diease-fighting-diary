@@ -10,7 +10,6 @@ const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const { ObjectId } = require('mongodb');
 const NaverStrategy = require('passport-naver').Strategy;
-const fetch = require('node-fetch');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -51,11 +50,13 @@ passport.use(new NaverStrategy({
   clientSecret: process.env.NAVER_CLIENT_SECRET,
   callbackURL: process.env.CALLBACK_URL,
 }, async (accessToken, refreshToken, profile, done) => {
-  console.log(profile);
+  console.log("this is profile" + JSON.stringify(profile));
   const userData = {
     username: profile.id,
-    name: profile._json.name,
+    nickname: profile.displayName,
     email: profile._json.email,
+    profileImage: profile._json.profile_image,
+    age: profile._json.age,
     provider: 'naver'
   };
 
@@ -78,6 +79,7 @@ passport.serializeUser((user, done) => {
     done(null, {
       id: user._id ? user._id : user.username,
       username: user.username
+
     });
   });
 });
@@ -85,9 +87,6 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (user, done) => {
   let result = await db.collection('users').findOne({_id : new ObjectId(user.id) })
-  if (result.password) {
-    delete result.password
-  }
   process.nextTick(() => {
     return done(null, result)
   })
@@ -108,8 +107,11 @@ new MongoClient(url).connect().then((client)=>{
 })
 
 app.get('/', (req, res) => {
-    
-    res.redirect('/home');
+    if (req.user) {
+        res.redirect('/home');
+    } else {
+        res.redirect('/login');
+    }
 });
 
 app.get('/next', (req, res) => {
@@ -120,7 +122,8 @@ app.get('/next', (req, res) => {
 
 app.get('/home', (req, res) => {
     if (req.user) {
-        res.send('OK')
+        console.log(req.user)
+        res.redirect('/dashboard');
     }
  else {
         res.redirect('/login');
@@ -160,8 +163,10 @@ app.post('/register', async (req, res) => {
       username : req.body.username,
       password : hash,
       email : req.body.email,
-      name : req.body.name,
-      birthday : req.body.birth ,
+      nickname : req.body.nickname,
+      age : req.body.age,
+      provider : 'local',
+      profileImage : 'https://pixabay.com/get/ga7b56f8d85142ef1b6d2b1b493af4566af98abb61223de4dd985776273fda7a17798881dd34f18756bf56b5d87dbde70_640.png',
     })
   } else {
     res.send('이미 존재하는 아이디입니다.')
@@ -169,9 +174,11 @@ app.post('/register', async (req, res) => {
   res.redirect('/')
 })
 
-app.get('/callback/naver',
-  passport.authenticate('naver', { failureRedirect: '/' }),
-  (req, res) => {
-    res.redirect('/');
-  }
-);
+app.get('/auth/naver', passport.authenticate('naver', {authType: 'reprompt'}));
+app.get('/callback/naver', passport.authenticate('naver', { failureRedirect: '/login' }), (req, res) => {
+  res.redirect('/naver/next');
+});
+
+app.get('/naver/next', (req, res) => {
+  res.redirect('/');
+});

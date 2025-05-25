@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>네이버 회원 정보 입력</title>
+  <link rel="stylesheet" href="/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+  <div class="container">
+    <h1>거의 다 됐습니다.</h1>
+    <form action="/naver/next" method="POST" class="form-section">
+
+      <!-- 닉네임 -->
+      <div class="form-group">
+        <label for="nickname">표시될 이름 (닉네임)</label>
+        <input
+          type="text"
+          id="nickname"
+          name="nickname"
+          placeholder="닉네임"
+          value="<%= user.nickname || '' %>"
+          required
+        />
+      </div>
+
+      <!-- 나이 -->
+      <div class="form-group">
+        <label for="age">나이</label>
+        <input
+          type="number"
+          id="age"
+          name="age"
+          placeholder="예: 42"
+          min="0"
+          value="<%= user.age || '' %>"
+        />
+      </div>
+
+      <button type="submit" class="btn-submit">다음으로</button>
+    </form>
+  </div>
+</body>
+</html>
