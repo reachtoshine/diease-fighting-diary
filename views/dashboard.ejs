@@ -2,26 +2,160 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>로그인</title>
-  <link rel="stylesheet" href="style.css">
+  <title>dashboard</title>
+  <link rel="stylesheet" href="/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f6f8fc;
+      padding: 0 !important;
+    }
+    .top-bar {
+      background: #4e73df;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      font-size: 1rem;
+    }
+    .menu-btn {
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 240px;
+      height: 100%;
+      background: #2e3b8d;
+      color: white;
+      padding: 20px;
+      transition: left 0.3s ease;
+      z-index: 1000;
+    }
+    .sidebar.active {
+      left: 0;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar li {
+      margin: 20px 0;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .main-content {
+      transition: margin-left 0.3s ease;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+    }
+    .popup {
+      background: #ffe9c9;
+      border-left: 6px solid #ffa726;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #444;
+    }
+    .btn-popup {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 20px;
+      background: #ff9800;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .record-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .record-link {
+      flex: 1 1 calc(50% - 16px);
+      background: linear-gradient(135deg, #f8f9ff, #eef1f8);
+      padding: 18px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      text-decoration: none;
+      color: #333;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .record-link:hover {
+      background: #dce6ff;
+      transform: translateY(-2px);
+    }
+    .record-link span {
+      font-size: 1.4em;
+    }
+  </style>
 </head>
 <body>
-  <div class="container login-container">
 
-<% if (showCancerPopup) { %>
-  <div class="popup">
-    <p>🧬 <strong><%= user.nickname %></strong>님, 아직 암 관련 정보를 입력하지 않으셨어요.<br>간단한 정보를 기록해 주세요!</p>
-    <a href="/cancer-info" class="btn-popup">입력하러 가기</a>
-  </div>
-<% } %>
+<div class="sidebar" id="sidebar">
+  <span class="menu-btn" onclick="toggleSidebarr()">&#9776;</span>
+  <ul>
+  <h3>📋 메뉴</h3>
+    <li><a href="/dashboard">🏠 대시보드</a></li>
+    <li><a href="/cancer-info">🧬 암 정보 입력</a></li>
+    <li><a href="/logout">🚪 로그아웃</a></li>
+  </ul>
+</div>
 
-<section>
-  <h2>대시보드 내용</h2>
-  <!-- 여기에 진짜 대시보드 구성 들어감 -->
-</section>
+<div class="top-bar">
+  <span class="menu-btn" onclick="toggleSidebar()">&#9776;</span>
+  <span><%= new Date().toLocaleDateString() %></span>
+</div>
 
+<div class="main-content">
+  <% if (showCancerPopup) { %>
+    <div class="popup">
+      <p>🧬 <strong><%= user.nickname %></strong>님, 아직 암 관련 정보를 입력하지 않으셨어요.<br>간단한 정보를 기록해 주세요!</p>
+      <a href="/cancer-info" class="btn-popup">입력하러 가기</a>
+    </div>
+  <% } %>
 
-  </div>
+  <section>
+    <h2>📊 오늘의 기록</h2>
+    <div class="record-links">
+      <a class="record-link" href="/record/meal"><span>🍱</span>식사 기록</a>
+      <a class="record-link" href="/record/exercise"><span>🏃‍♂️</span>운동량 기록</a>
+      <a class="record-link" href="/record/bowel"><span>🚽</span>대변 상태</a>
+      <a class="record-link" href="/record/temp"><span>🌡</span>체온</a>
+      <a class="record-link" href="/record/pressure"><span>🩸</span>혈압/혈당</a>
+      <a class="record-link" href="/record/weight"><span>⚖</span>체중</a>
+      <a class="record-link" href="/record/mood"><span>😊</span>기분</a>
+      <a class="record-link" href="/record/pain"><span>💥</span>통증</a>
+      <a class="record-link" href="/record/water"><span>💧</span>물 섭취량</a>
+    </div>
+  </section>
+</div>
+
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+  }
+    function toggleSidebarr() {
+    document.getElementById('sidebar').classList.remove('active');
+  }
+</script>
+
 </body>
 </html>

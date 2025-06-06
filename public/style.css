@@ -230,3 +230,28 @@ input[type="checkbox"] { margin-right: 10px; }
 .btn-popup:hover {
   background: #3752b5;
 }
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -240px;
+  width: 240px;
+  height: 100%;
+  background: #2e3b8d;
+  color: white;
+  padding: 20px;
+  transition: left 0.3s ease;
+  z-index: 10;
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+.main-content {
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.active ~ .main-content {
+  margin-left: 240px;
+}

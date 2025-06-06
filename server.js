@@ -1,7 +1,7 @@
 const express = require('express');
 const ejs = require('ejs');
 const app = express();
-const port = 3000;
+const port = 4000;
 const { MongoClient } = require('mongodb')
 const session = require('express-session')
 const passport = require('passport')
@@ -132,6 +132,9 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
+    if(req.user) {
+        return res.redirect('/dashboard');
+    }
     res.render('login.ejs');
 }); 
 
@@ -240,6 +243,26 @@ app.get('/cancer-info/confirm', async (req, res) => {
   }
 });
 
+app.get('/record/:page', async (req, res) => {
+  if (!req.user) {
+    return res.redirect('/login');
+  } else {
+    res.render(req.params.page + '.ejs', )
+  }
+});
+
+
+
+
+
+
+
+
+app.get('/123', (req, res, next) => {
+  const err = new Error('123');
+  err.statusCode = 429;
+  next(err);
+});
 
 
 
@@ -259,70 +282,27 @@ app.get('/cancer-info/confirm', async (req, res) => {
 
 
 
+app.use((err, req, res, next) => {
+  const status = err.statusCode || 500;
+
+  if (status === 400) return res.status(400).render('400.ejs');
+  if (status === 401) return res.status(401).render('401.ejs');
+  if (status === 403) return res.status(403).render('403.ejs');
+  if (status === 429) return res.status(429).render('429.ejs');
+
+  // 그 외 4xx는 공통 처리
+  if (status >= 400 && status < 500) {
+    return res.status(status).render('4xx.ejs');
+  }
+
+  next(err); // 서버 에러(500번대)는 다음 핸들러로
+});
 
 
-
-
-
-
-
-
-
+app.use((err, req, res, next) => {
+  res.status(500).render('500.ejs');
+});
 
 app.use((req, res, next) => {
-  res.status(404).send(`
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-      <meta charset="UTF-8">
-      <title>페이지를 찾을 수 없습니다</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link rel="stylesheet" href="/style.css">
-      <style>
-        body {
-          font-family: sans-serif;
-          background: #f9f9f9;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          margin: 0;
-          text-align: center;
-        }
-
-        h1 {
-          font-size: 2em;
-          color: #333;
-          margin-bottom: 10px;
-        }
-
-        p {
-          color: #666;
-          font-size: 1.1em;
-          margin-bottom: 24px;
-        }
-
-        a {
-          display: inline-block;
-          background: #4e73df;
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: bold;
-        }
-
-        a:hover {
-          background: #2c5de5;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>😢 페이지를 찾을 수 없습니다</h1>
-      <p>요청하신 페이지가 존재하지 않거나 이동되었어요.</p>
-      <a href="/">홈으로 돌아가기</a>
-    </body>
-    </html>
-  `);
+  res.status(404).render('404.ejs');
 });

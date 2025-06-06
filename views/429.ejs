@@ -1,0 +1,71 @@
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <title>페이지를 찾을 수 없습니다</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <style>
+        body {
+          font-family: sans-serif;
+          background: #f9f9f9;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+          text-align: center;
+        }
+
+        h1 {
+          font-size: 2em;
+          color: #333;
+          margin-bottom: 10px;
+        }
+
+        p {
+          color: #666;
+          font-size: 1.1em;
+          margin-bottom: 24px;
+        }
+
+        button {
+          display: inline-block;
+          background: #4e73df;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: bold;
+            border: none;
+        }
+
+        button:hover {
+          background: #2c5de5;
+        }
+      </style>
+    </head>
+    <body>
+      <h1 style="font-size: 3em; color: #2c5de5;">429</h1> 
+      <h1>⏳ 잠시만요!</h1>
+      <p>요청이 너무 많아요. 서버가 잠시 숨을 고르는 중이에요. 잠시 후 다시 시도해 주세요.</p>
+      <button id="gobutton" onclick="location.href='/'" disabled>5초 후에 버튼이 활성화돼요...</button>
+    </body>
+    <script>
+      // 5초 후에 버튼 활성화
+    let seconds = 5;
+    const countdownEl = document.getElementById("gobutton");
+
+    const timer = setInterval(() => {
+    seconds--;
+    countdownEl.textContent = `${seconds}초 후에 버튼이 활성화돼요...`;
+
+    if (seconds === 0) {
+        clearInterval(timer);
+        document.getElementById("gobutton").disabled = false;
+        countdownEl.textContent = "홈으로 돌아가기";
+    }
+    }, 1000);
+
+    </script>
+    </html>

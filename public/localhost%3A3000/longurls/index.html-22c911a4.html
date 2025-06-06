@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>실시간 투표율</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #rateContainer { font-size: 2em; color: #0070f3; }
+  </style>
+</head>
+<body>
+  <h1>실시간 투표율 정보</h1>
+  <div id="rateContainer">불러오는 중...</div>
+
+  <script>
+    async function fetchRate() {
+      const targetUrl = "https://issue.daum.net/election/2025/status";
+      const corsProxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
+
+      try {
+        const response = await fetch(corsProxyUrl);
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        console.log(doc);
+        const rateElement = doc.querySelectorAll(".txt_rate");
+        console.log(String(JSON.stringify(rateElement)));
+        const rateElement1 = rateElement[0].innerText || null; // 첫 번째 요소를 선택하거나 null로 설정
+        const rateElement2 = rateElement[1].innerText || null; // 두 번째 요소를 선택하거나 null로 설정
+        const rateElement3 = rateElement[2].innerText || null; // 세 번째 요소를 선택하거나 null로 설정
+        console.log(doc);
+
+        if (rateElement) {
+          document.getElementById("rateContainer").innerText =
+            '이재명' + rateElement1 + '% / 김문수 ' + rateElement2 + '% / 표차 ' + rateElement3 + '%';
+        } else {
+          document.getElementById("rateContainer").innerText = "데이터 없음";
+          console.log(doc)
+        }
+      } catch (error) {
+        console.error("Fetch 실패:", error);
+        document.getElementById("rateContainer").innerText = "오류 발생";
+      }
+    }
+
+    // 0.1초마다 실행
+    setInterval(fetchRate, 100);
+  </script>
+</body>
+</html>
