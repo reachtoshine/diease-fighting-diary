@@ -98,7 +98,7 @@ new MongoClient(url).connect().then((client)=>{
   console.log('DB연결성공')
   db = client.db('CancerDiary')
 
-  app.listen(port, () => {
+  app.listen(port,'0.0.0.0' ,() => {
     console.log('Server is running on http://localhost:' + port);
   })
 
