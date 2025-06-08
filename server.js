@@ -251,7 +251,29 @@ app.get('/record/:page', async (req, res) => {
   }
 });
 
-
+app.get('/meal/:mealType', (req,res) => {
+  if (!req.user) {
+    return res.redirect('/login');
+  }
+  const mealType = req.params.mealType;
+  let mealTypeName;
+  if (mealType === 'breakfast') {
+    mealTypeName = '아침';
+  } else if (mealType === 'lunch') {
+    mealTypeName = '점심';
+  } else if (mealType === 'dinner') {
+    mealTypeName = '저녁';
+  } else if (mealType === 'morningsnack') {
+    mealTypeName = '오전 간식';
+  } else if (mealType === 'afternoonsnack') {
+    mealTypeName = '오후 간식';
+  } else if (mealType === 'latesnack') {
+    mealTypeName = '야식';
+  } else {
+    return res.redirect('/record/meal'); // 잘못된 mealType이면 기본 페이지로 리다이렉트
+  }
+  res.render('meal-input.ejs', { mealType: mealType });
+})
 
 
 
@@ -282,27 +304,27 @@ app.get('/123', (req, res, next) => {
 
 
 
-app.use((err, req, res, next) => {
-  const status = err.statusCode || 500;
+// app.use((err, req, res, next) => {
+//   const status = err.statusCode || 500;
 
-  if (status === 400) return res.status(400).render('400.ejs');
-  if (status === 401) return res.status(401).render('401.ejs');
-  if (status === 403) return res.status(403).render('403.ejs');
-  if (status === 429) return res.status(429).render('429.ejs');
+//   if (status === 400) return res.status(400).render('400.ejs');
+//   if (status === 401) return res.status(401).render('401.ejs');
+//   if (status === 403) return res.status(403).render('403.ejs');
+//   if (status === 429) return res.status(429).render('429.ejs');
 
-  // 그 외 4xx는 공통 처리
-  if (status >= 400 && status < 500) {
-    return res.status(status).render('4xx.ejs');
-  }
+//   // 그 외 4xx는 공통 처리
+//   if (status >= 400 && status < 500) {
+//     return res.status(status).render('4xx.ejs');
+//   }
 
-  next(err); // 서버 에러(500번대)는 다음 핸들러로
-});
+//   next(err); // 서버 에러(500번대)는 다음 핸들러로
+// });
 
 
-app.use((err, req, res, next) => {
-  res.status(500).render('500.ejs');
-});
+// app.use((err, req, res, next) => {
+//   res.status(500).render('500.ejs');
+// });
 
-app.use((req, res, next) => {
-  res.status(404).render('404.ejs');
-});
+// app.use((req, res, next) => {
+//   res.status(404).render('404.ejs');
+// });

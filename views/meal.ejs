@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>식사 기록</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f6f8fc;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    .meal-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    .meal-buttons a {
+      display: block;
+      background: #ffffff;
+      color: #333;
+      text-decoration: none;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .meal-buttons a:hover {
+      background: #e0ebff;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <h2>🍽 식사 기록</h2>
+  <div class="meal-buttons">
+    <a href="/meal/breakfast">🍚 아침 입력하기</a>
+    <a href="/meal/morningsnack">🍌 오전 간식 입력하기</a>
+    <a href="/meal/lunch">🥗 점심 입력하기</a>
+    <a href="/meal/afternoonsnack">🥜 오후 간식 입력하기</a>
+    <a href="/meal/dinner">🍲 저녁 입력하기</a>
+    <a href="/meal/latesnack">🌙 야식 입력하기</a>
+  </div>
+</body>
+</html>

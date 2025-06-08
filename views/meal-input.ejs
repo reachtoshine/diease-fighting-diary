@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title><%= mealTypeName %> 입력</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f6f8fc;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      background: white;
+      padding: 24px;
+      max-width: 600px;
+      margin: 20px auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-top: 16px;
+      font-weight: 600;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .result-box {
+      margin-top: 10px;
+      background: #f0f4ff;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .food-list {
+      margin-top: 16px;
+      list-style: none;
+      padding: 0;
+    }
+    .food-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin-top: 24px;
+      padding: 12px;
+      font-size: 1rem;
+      background-color: #4e73df;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #375ab7;
+    }
+  </style>
+</head>
+<body>
+  <h2><%= mealTypeName %> 입력하기</h2>
+  <form id="mealForm" action="/record/meal/<%= mealType %>" method="POST">
+    <label for="food">음식 이름 입력</label>
+    <input type="text" id="food" placeholder="예: 김치" />
+    <button type="button" onclick="searchFood()">🔍 음식 검색</button>
+
+    <div id="resultBox" class="result-box" style="display:none;"></div>
+
+    <ul id="foodList" class="food-list"></ul>
+
+    <input type="hidden" name="items" id="items" />
+    <button type="submit">기록 저장</button>
+  </form>
+
+  <script>
+    const resultBox = document.getElementById('resultBox');
+    const foodList = document.getElementById('foodList');
+    const hiddenItems = document.getElementById('items');
+    const items = [];
+
+    async function searchFood() {
+      const foodName = document.getElementById('food').value.trim();
+      if (!foodName) return;
+
+      resultBox.style.display = 'none';
+      resultBox.innerText = '검색 중...';
+      resultBox.style.display = 'block';
+
+      try {
+        const res = await fetch(`/api/food?k=${encodeURIComponent(foodName)}`);
+        const data = await res.json();
+        if (data.name && data.kcal) {
+          resultBox.innerText = `${data.name} (${data.kcal} kcal)`;
+          items.push({ name: data.name, kcal: data.kcal });
+
+          const li = document.createElement('li');
+          li.innerText = `${data.name} - ${data.kcal} kcal`;
+          foodList.appendChild(li);
+
+          hiddenItems.value = JSON.stringify(items);
+        } else {
+          resultBox.innerText = '결과 없음 또는 오류';
+        }
+      } catch (err) {
+        resultBox.innerText = 'API 요청 실패';
+      }
+    }
+  </script>
+</body>
+</html>
