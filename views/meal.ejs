@@ -43,14 +43,30 @@
   </style>
 </head>
 <body>
-  <h2>🍽 식사 기록</h2>
-  <div class="meal-buttons">
-    <a href="/meal/breakfast">🍚 아침 입력하기</a>
-    <a href="/meal/morningsnack">🍌 오전 간식 입력하기</a>
-    <a href="/meal/lunch">🥗 점심 입력하기</a>
-    <a href="/meal/afternoonsnack">🥜 오후 간식 입력하기</a>
-    <a href="/meal/dinner">🍲 저녁 입력하기</a>
-    <a href="/meal/latesnack">🌙 야식 입력하기</a>
-  </div>
+  <h2>🍽 오늘의 식사 기록</h2>
+<ul class="meal-buttons">
+  <% const mealList = [
+    { key: 'breakfast', label: '🍚 아침' },
+    { key: 'morningsnack', label: '🍌 오전 간식' },
+    { key: 'lunch', label: '🥗 점심' },
+    { key: 'afternoonsnack', label: '🥜 오후 간식' },
+    { key: 'dinner', label: '🍲 저녁' },
+    { key: 'latesnack', label: '🌙 야식' },
+  ]; %>
+
+  <% mealList.forEach(meal => { %>
+    <li>
+      <a href="/meal/<%= meal.key %>?korean=<%= encodeURIComponent(meal.label) %>" class="meal-button">
+        <%= meal.label %>
+        <% if (kcalByMeal[meal.key]) { %>
+          : <%= kcalByMeal[meal.key] %> kcal
+        <% } else { %>
+          입력하기
+        <% } %>
+      </a>
+    </li>
+  <% }); %>
+</ul>
+
 </body>
 </html>

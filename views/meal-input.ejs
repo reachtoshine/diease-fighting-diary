@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title><%= mealTypeName %> 입력</title>
-  <link rel="stylesheet" href="/style.css">
+  <!-- <link rel="stylesheet" href="/style.css"> -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -29,12 +29,14 @@
       margin-top: 16px;
       font-weight: 600;
     }
-    input[type="text"] {
+    input[type="text"], input[type="number"] {
       width: 100%;
       padding: 10px;
       font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
+      box-sizing: border-box;
+      margin-top: 8px;
     }
     .result-box {
       margin-top: 10px;
@@ -67,16 +69,44 @@
     button:hover {
       background-color: #375ab7;
     }
+    #selectionBox {
+      margin-top: 10px;
+      display: none;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #f9f9f9;
+}
   </style>
 </head>
 <body>
   <h2><%= mealTypeName %> 입력하기</h2>
   <form id="mealForm" action="/record/meal/<%= mealType %>" method="POST">
-    <label for="food">음식 이름 입력</label>
+    <label for="food">음식 이름</label>
     <input type="text" id="food" placeholder="예: 김치" />
-    <button type="button" onclick="searchFood()">🔍 음식 검색</button>
+    <button type="button" onclick="searchFood()">🔍 검색</button>
 
     <div id="resultBox" class="result-box" style="display:none;"></div>
+
+    <div id="selectionBox">
+      <label>해당하는 음식 선택</label>
+      <select id="foodSelect"></select>
+
+      <label for="weightInput">섭취량 (g)</label>
+      <input type="number" id="weightInput" placeholder="예: 150" min="1" />
+
+      <button type="button" onclick="addSelectedFood()">✅ 확인</button>
+    </div>
 
     <ul id="foodList" class="food-list"></ul>
 
@@ -88,7 +118,12 @@
     const resultBox = document.getElementById('resultBox');
     const foodList = document.getElementById('foodList');
     const hiddenItems = document.getElementById('items');
+    const selectionBox = document.getElementById('selectionBox');
+    const foodSelect = document.getElementById('foodSelect');
+    const weightInput = document.getElementById('weightInput');
     const items = [];
+
+    let searchResults = [];
 
     async function searchFood() {
       const foodName = document.getElementById('food').value.trim();
@@ -101,21 +136,44 @@
       try {
         const res = await fetch(`/api/food?k=${encodeURIComponent(foodName)}`);
         const data = await res.json();
-        if (data.name && data.kcal) {
-          resultBox.innerText = `${data.name} (${data.kcal} kcal)`;
-          items.push({ name: data.name, kcal: data.kcal });
 
-          const li = document.createElement('li');
-          li.innerText = `${data.name} - ${data.kcal} kcal`;
-          foodList.appendChild(li);
-
-          hiddenItems.value = JSON.stringify(items);
+        if (data.length && data[0].name) {
+          resultBox.innerText = `${data.length}개의 결과가 있습니다. 모든 음식의 칼로리는 100g 기준입니다.`;
+          searchResults = data;
+          foodSelect.innerHTML = data.map((item, idx) => {
+            return `<option value="${idx}">${item.name.replace(/_/g, " : ")} ${item.kcal}kcal</option>`;
+          }).join('');
+          selectionBox.style.display = 'block';
         } else {
-          resultBox.innerText = '결과 없음 또는 오류';
+          resultBox.innerText = '검색 결과가 없습니다';
+          selectionBox.style.display = 'none';
         }
       } catch (err) {
+        console.error(err);
         resultBox.innerText = 'API 요청 실패';
+        selectionBox.style.display = 'none';
       }
+    }
+
+    function addSelectedFood() {
+      const selectedIndex = parseInt(foodSelect.value);
+      const selected = searchResults[selectedIndex];
+      const grams = parseFloat(weightInput.value);
+
+      if (!selected || !grams || grams <= 0) {
+        alert('음식과 섭취량을 정확히 입력해주세요.');
+        return;
+      }
+
+      const realKcal = Math.round((Number(selected.kcal) * grams) / 100);
+      items.push({ name: selected.name, kcal: realKcal, weight: grams });
+
+      const li = document.createElement('li');
+      li.innerText = `${selected.name} - ${grams}g ≈ ${realKcal} kcal`;
+      foodList.appendChild(li);
+
+      hiddenItems.value = JSON.stringify(items);
+      selectionBox.style.display = 'none';
     }
   </script>
 </body>

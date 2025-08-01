@@ -10,6 +10,7 @@ const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const { ObjectId } = require('mongodb');
 const NaverStrategy = require('passport-naver').Strategy;
+const xml2js = require('xml2js');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -246,37 +247,113 @@ app.get('/cancer-info/confirm', async (req, res) => {
   }
 });
 
-app.get('/record/:page', async (req, res) => {
+app.get('/record/meal', async (req, res) => {
   if (!req.user) {
     return res.redirect('/login');
   } else {
-    res.render(req.params.page + '.ejs', )
-  }
-});
+    const userId = req.user._id;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
 
-app.get('/meal/:mealType', (req,res) => {
+    try {
+      const records = await db.collection('mealRecords').find({
+        userId: userId,
+        date: { $gte: todayStart, $lte: todayEnd }
+    }).toArray();
+
+    // 끼니별 칼로리 정리
+    const kcalByMeal = {};
+    for (const r of records) {
+      kcalByMeal[r.mealType] = r.totalKcal;
+    }
+
+    res.render('meal.ejs', {
+      user: req.user,
+      kcalByMeal // { breakfast: 320, lunch: null, ... }
+    });
+  } catch (err) {
+    console.error('식사 데이터 조회 실패:', err);
+    res.status(500).send('서버 오류');
+  };
+}});
+
+app.get('/meal/:mealType', (req, res) => {
   if (!req.user) {
     return res.redirect('/login');
   }
   const mealType = req.params.mealType;
-  let mealTypeName;
-  if (mealType === 'breakfast') {
-    mealTypeName = '아침';
-  } else if (mealType === 'lunch') {
-    mealTypeName = '점심';
-  } else if (mealType === 'dinner') {
-    mealTypeName = '저녁';
-  } else if (mealType === 'morningsnack') {
-    mealTypeName = '오전 간식';
-  } else if (mealType === 'afternoonsnack') {
-    mealTypeName = '오후 간식';
-  } else if (mealType === 'latesnack') {
-    mealTypeName = '야식';
-  } else {
-    return res.redirect('/record/meal'); // 잘못된 mealType이면 기본 페이지로 리다이렉트
+  const mealTypeName = decodeURIComponent(req.query.korean)
+
+  res.render('meal-input.ejs', { mealType, mealTypeName });
+
+});
+
+app.get('/api/food', async (req, res) => {
+  const q = req.query.k;
+  if (!q) return res.status(400).json({ error: '음식 이름이 필요합니다.' });
+
+  const apiKey = process.env.FOOD_API_KEY;
+  const url = `https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo02/getFoodNtrCpntDbInq02` +
+    `?serviceKey=${apiKey}` +
+    '&numOfRows=100'+
+    `&type=json` +
+    `&FOOD_NM_KR=${encodeURIComponent(q)}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+let json = data.body.items.map(item => {
+  return {
+    name: item.FOOD_NM_KR,
+    kcal: parseInt(item.AMT_NUM1),
+    serve: item.SERVING_SIZE ? Number(item.SERVING_SIZE.replace("g", "")) : null
+  };
+});
+
+
+    res.json(json);
+  } catch (err) {
+    console.error('API 요청 실패:', err);
+    res.status(500).json({ error: '식약처 API 요청 오류' });
   }
-  res.render('meal-input.ejs', { mealType: mealType });
-})
+});
+
+app.post('/record/meal/:mealType', async (req, res) => {
+  if (!req.user) {
+    res.redirect('/login');
+  }
+
+  const userId = req.user._id;
+  const mealType = req.params.mealType;
+  const itemsRaw = req.body.items;
+
+  let items;
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch (err) {
+    return res.status(400).send('입력 데이터 오류');
+  }
+  const totalKcal = items.reduce((sum, item) => sum + (item.kcal || 0), 0);
+  
+  const record = {
+    userId: userId,
+    mealType: mealType,
+    items: items, // [{name, kcal, weight}]
+    totalKcal: totalKcal, // 총 칼로리
+    date: new Date(), // 기록 시각
+  };
+
+  try {
+    const result = await db.collection('mealRecords').insertOne(record);
+    console.log('기록 성공:', result.insertedId);
+    res.redirect('/dashboard'); // 성공 시 대시보드 등으로 이동
+  } catch (err) {
+    console.error('DB 저장 실패:', err);
+    res.status(500).send('서버 오류로 저장 실패');
+  }
+});
 
 
 
