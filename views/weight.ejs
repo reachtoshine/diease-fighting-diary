@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>체중 기록</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">체중 기록</div>
+            <div class="subtitle">몸무게를 기록하고 변화 추이를 확인하세요.</div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" onclick="history.back()" aria-label="뒤로가기">←</button>
+            <a class="icon-btn" href="/dashboard" aria-label="홈">⌂</a>
+            <span class="badge">Body</span>
+          </div>
+        </div>
+
+        <form action="/record/weight" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="weight">체중(kg)</label>
+          <input type="number" id="weight" name="weight" step="0.1" min="0" placeholder="예: 63.2" required />
+
+          <label for="bodyFat">체지방률(%)</label>
+          <input type="number" id="bodyFat" name="bodyFat" step="0.1" min="0" placeholder="예: 21.5" />
+
+          <label for="memo">메모</label>
+          <textarea id="memo" name="memo" placeholder="오늘 몸 상태를 간단히 기록하세요."></textarea>
+
+          <button class="button" type="submit">저장</button>
+        </form>
+      </div>
+
+      <div class="card chart-card">
+        <div class="page-header">
+          <div>
+            <div class="title">최근 체중 추이</div>
+            <div class="subtitle">변화를 그래프로 확인하세요.</div>
+          </div>
+          <span class="badge">Trend</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const chartData = <%- JSON.stringify(chart || { labels: [], values: [] }) %>;
+    const labels = chartData.labels.map(d => new Date(d).toLocaleDateString('ko-KR'));
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: '체중(kg)',
+          data: chartData.values,
+          borderColor: '#2e6bff',
+          backgroundColor: 'rgba(46,107,255,0.15)',
+          tension: 0.35,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: false } }
+      }
+    });
+  </script>
+</body>
+</html>

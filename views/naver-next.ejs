@@ -7,38 +7,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-  <div class="container">
-    <h1>거의 다 됐습니다.</h1>
-    <form action="/naver/next" method="POST" class="form-section">
+  <div class="page">
+    <div class="container">
+      <div class="card login-card">
+        <div class="page-header">
+          <div>
+            <div class="title">네이버 회원 정보</div>
+            <div class="subtitle">표시될 이름과 나이를 입력해주세요.</div>
+          </div>
+          <span class="badge">Naver</span>
+        </div>
 
-      <!-- 닉네임 -->
-      <div class="form-group">
-        <label for="nickname">표시될 이름 (닉네임)</label>
-        <input
-          type="text"
-          id="nickname"
-          name="nickname"
-          placeholder="닉네임"
-          value="<%= user.nickname || '' %>"
-          required
-        />
+        <form action="/naver/next" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="nickname">닉네임</label>
+          <input
+            type="text"
+            id="nickname"
+            name="nickname"
+            placeholder="닉네임"
+            value="<%= user.nickname || '' %>"
+            required
+          />
+
+          <label for="age">나이</label>
+          <input
+            type="number"
+            id="age"
+            name="age"
+            placeholder="예: 42"
+            min="0"
+            value="<%= user.age || '' %>"
+          />
+
+          <button type="submit" class="button">다음으로</button>
+        </form>
       </div>
-
-      <!-- 나이 -->
-      <div class="form-group">
-        <label for="age">나이</label>
-        <input
-          type="number"
-          id="age"
-          name="age"
-          placeholder="예: 42"
-          min="0"
-          value="<%= user.age || '' %>"
-        />
-      </div>
-
-      <button type="submit" class="btn-submit">다음으로</button>
-    </form>
+    </div>
   </div>
 </body>
 </html>

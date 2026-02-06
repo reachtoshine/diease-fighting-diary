@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>통증 기록</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">통증 기록</div>
+            <div class="subtitle">통증의 강도와 위치를 기록하세요.</div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" onclick="history.back()" aria-label="뒤로가기">←</button>
+            <a class="icon-btn" href="/dashboard" aria-label="홈">⌂</a>
+            <span class="badge">Pain</span>
+          </div>
+        </div>
+
+        <form action="/record/pain" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="level">통증 강도 (0~10)</label>
+          <input type="number" id="level" name="level" min="0" max="10" placeholder="예: 3" required />
+
+          <label for="location">통증 위치</label>
+          <input type="text" id="location" name="location" placeholder="예: 복부, 허리" required />
+
+          <label for="memo">메모</label>
+          <textarea id="memo" name="memo" placeholder="통증 지속 시간이나 상황을 기록하세요."></textarea>
+
+          <button class="button" type="submit">저장</button>
+        </form>
+      </div>
+
+      <div class="card chart-card">
+        <div class="page-header">
+          <div>
+            <div class="title">최근 통증 추이</div>
+            <div class="subtitle">통증 강도를 그래프로 확인하세요.</div>
+          </div>
+          <span class="badge">Trend</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const chartData = <%- JSON.stringify(chart || { labels: [], values: [] }) %>;
+    const labels = chartData.labels.map(d => new Date(d).toLocaleDateString('ko-KR'));
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: '통증 강도(0~10)',
+          data: chartData.values,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.2)',
+          tension: 0.35,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 0, max: 10 } }
+      }
+    });
+  </script>
+</body>
+</html>

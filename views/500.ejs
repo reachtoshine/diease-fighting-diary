@@ -1,54 +1,26 @@
 <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-      <meta charset="UTF-8">
-      <title>서버에 문제가 발생했습니다</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link rel="stylesheet" href="/style.css">
-      <style>
-        body {
-          font-family: sans-serif;
-          background: #f9f9f9;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          margin: 0;
-          text-align: center;
-        }
-
-        h1 {
-          font-size: 2em;
-          color: #333;
-          margin-bottom: 10px;
-        }
-
-        p {
-          color: #666;
-          font-size: 1.1em;
-          margin-bottom: 24px;
-        }
-
-        a {
-          display: inline-block;
-          background: #4e73df;
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: bold;
-        }
-
-        a:hover {
-          background: #2c5de5;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>😢 죄송합니다! 서버에 문제가 발생했어요.</h1>
-      <p>저희가 문제를 확인 중이며, 곧 해결될 예정입니다.
-잠시 후 다시 시도해 주세요!</p>
-      <a href="/">홈으로 돌아가기</a>
-    </body>
-    </html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>500</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="error-hero">
+          <div class="error-illustration">⚠️</div>
+          <div class="error-code">500</div>
+          <div class="title">서버 오류</div>
+          <p class="subtitle">문제가 발생했어요. 잠시 후 다시 시도해주세요.</p>
+          <div class="footer-actions">
+            <a class="button" href="/">홈으로</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

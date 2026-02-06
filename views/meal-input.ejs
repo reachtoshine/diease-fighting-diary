@@ -3,116 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <title><%= mealTypeName %> 입력</title>
-  <!-- <link rel="stylesheet" href="/style.css"> -->
+  <link rel="stylesheet" href="/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f6f8fc;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    form {
-      background: white;
-      padding: 24px;
-      max-width: 600px;
-      margin: 20px auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    label {
-      display: block;
-      margin-top: 16px;
-      font-weight: 600;
-    }
-    input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 10px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      margin-top: 8px;
-    }
-    .result-box {
-      margin-top: 10px;
-      background: #f0f4ff;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
-    .food-list {
-      margin-top: 16px;
-      list-style: none;
-      padding: 0;
-    }
-    .food-list li {
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-    }
-    button {
-      display: block;
-      width: 100%;
-      margin-top: 24px;
-      padding: 12px;
-      font-size: 1rem;
-      background-color: #4e73df;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #375ab7;
-    }
-    #selectionBox {
-      margin-top: 10px;
-      display: none;
-      background: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 12px;
-      border-radius: 8px;
-    }
-    select {
-    width: 100%;
-    padding: 12px;
-    font-size: 1em;
-    margin-bottom: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #f9f9f9;
-}
-  </style>
 </head>
 <body>
-  <h2><%= mealTypeName %> 입력하기</h2>
-  <form id="mealForm" action="/record/meal/<%= mealType %>" method="POST">
-    <label for="food">음식 이름</label>
-    <input type="text" id="food" placeholder="예: 김치" />
-    <button type="button" onclick="searchFood()">🔍 검색</button>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title"><%= mealTypeName %> 기록</div>
+            <div class="subtitle">먹은 음식을 검색해서 추가하세요.</div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" onclick="history.back()" aria-label="뒤로가기">←</button>
+            <a class="icon-btn" href="/dashboard" aria-label="홈">⌂</a>
+            <span class="badge">Meal Input</span>
+          </div>
+        </div>
 
-    <div id="resultBox" class="result-box" style="display:none;"></div>
+        <form id="mealForm" action="/record/meal/<%= mealType %>" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="food">음식 이름</label>
+          <input type="text" id="food" placeholder="예: 김치찌개" />
+          <button class="button" type="button" onclick="searchFood()">🔍 검색</button>
 
-    <div id="selectionBox">
-      <label>해당하는 음식 선택</label>
-      <select id="foodSelect"></select>
+          <div id="resultBox" class="helper" style="display:none;"></div>
 
-      <label for="weightInput">섭취량 (g)</label>
-      <input type="number" id="weightInput" placeholder="예: 150" min="1" />
+          <div id="selectionBox" class="card" style="display:none;">
+            <label>해당하는 음식 선택</label>
+            <select id="foodSelect"></select>
 
-      <button type="button" onclick="addSelectedFood()">✅ 확인</button>
+            <label for="weightInput">섭취량 (g)</label>
+            <input type="number" id="weightInput" placeholder="예: 150" min="1" />
+
+            <button class="button secondary" type="button" onclick="addSelectedFood()">✅ 추가</button>
+          </div>
+
+          <ul id="foodList" class="helper"></ul>
+
+          <input type="hidden" name="items" id="items" />
+          <button class="button" type="submit">기록 저장</button>
+        </form>
+      </div>
     </div>
-
-    <ul id="foodList" class="food-list"></ul>
-
-    <input type="hidden" name="items" id="items" />
-    <button type="submit">기록 저장</button>
-  </form>
+  </div>
 
   <script>
     const resultBox = document.getElementById('resultBox');
@@ -129,9 +64,8 @@
       const foodName = document.getElementById('food').value.trim();
       if (!foodName) return;
 
-      resultBox.style.display = 'none';
-      resultBox.innerText = '검색 중...';
       resultBox.style.display = 'block';
+      resultBox.innerText = '검색 중...';
 
       try {
         const res = await fetch(`/api/food?k=${encodeURIComponent(foodName)}`);
@@ -156,7 +90,7 @@
     }
 
     function addSelectedFood() {
-      const selectedIndex = parseInt(foodSelect.value);
+      const selectedIndex = parseInt(foodSelect.value, 10);
       const selected = searchResults[selectedIndex];
       const grams = parseFloat(weightInput.value);
 

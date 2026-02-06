@@ -5,68 +5,86 @@
   <title>식사 기록</title>
   <link rel="stylesheet" href="/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f6f8fc;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    .meal-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      max-width: 600px;
-      margin: 20px auto;
-    }
-    .meal-buttons a {
-      display: block;
-      background: #ffffff;
-      color: #333;
-      text-decoration: none;
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      transition: all 0.2s ease;
-    }
-    .meal-buttons a:hover {
-      background: #e0ebff;
-      transform: translateY(-2px);
-    }
-  </style>
 </head>
 <body>
-  <h2>🍽 오늘의 식사 기록</h2>
-<ul class="meal-buttons">
-  <% const mealList = [
-    { key: 'breakfast', label: '🍚 아침' },
-    { key: 'morningsnack', label: '🍌 오전 간식' },
-    { key: 'lunch', label: '🥗 점심' },
-    { key: 'afternoonsnack', label: '🥜 오후 간식' },
-    { key: 'dinner', label: '🍲 저녁' },
-    { key: 'latesnack', label: '🌙 야식' },
-  ]; %>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">오늘의 식사 기록</div>
+            <div class="subtitle">끼니별로 간단히 기록하세요.</div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" onclick="history.back()" aria-label="뒤로가기">←</button>
+            <a class="icon-btn" href="/dashboard" aria-label="홈">⌂</a>
+            <span class="badge">Nutrition</span>
+          </div>
+        </div>
 
-  <% mealList.forEach(meal => { %>
-    <li>
-      <a href="/meal/<%= meal.key %>?korean=<%= encodeURIComponent(meal.label) %>" class="meal-button">
-        <%= meal.label %>
-        <% if (kcalByMeal[meal.key]) { %>
-          : <%= kcalByMeal[meal.key] %> kcal
-        <% } else { %>
-          입력하기
-        <% } %>
-      </a>
-    </li>
-  <% }); %>
-</ul>
+        <div class="grid grid-2">
+          <% const mealList = [
+            { key: 'breakfast', label: '🍚 아침' },
+            { key: 'morningsnack', label: '🍌 오전 간식' },
+            { key: 'lunch', label: '🥗 점심' },
+            { key: 'afternoonsnack', label: '🥜 오후 간식' },
+            { key: 'dinner', label: '🍲 저녁' },
+            { key: 'latesnack', label: '🌙 야식' },
+          ]; %>
 
+          <% mealList.forEach(meal => { %>
+            <a class="tile" href="/meal/<%= meal.key %>?korean=<%= encodeURIComponent(meal.label) %>">
+              <div class="pill"><%= meal.label %></div>
+              <div class="tile-title">기록하기</div>
+              <div class="tile-meta">
+                <% if (kcalByMeal[meal.key]) { %>
+                  <%= kcalByMeal[meal.key] %> kcal
+                <% } else { %>
+                  아직 기록 없음
+                <% } %>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="page-header">
+          <div>
+            <div class="title">최근 칼로리 추이</div>
+            <div class="subtitle">최근 7일 총 섭취 칼로리</div>
+          </div>
+          <span class="badge">Trend</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="mealChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const mealChart = <%- JSON.stringify(mealChart || { labels: [], values: [] }) %>;
+    const labels = mealChart.labels.map(d => new Date(d).toLocaleDateString('ko-KR'));
+    const ctx = document.getElementById('mealChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '총 섭취 칼로리',
+          data: mealChart.values,
+          backgroundColor: 'rgba(255, 159, 67, 0.3)',
+          borderColor: '#ff9f43'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  </script>
 </body>
 </html>

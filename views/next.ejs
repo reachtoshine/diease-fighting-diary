@@ -4,49 +4,57 @@
   <meta charset="UTF-8">
   <title>세부 항목 선택</title>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/dropdown.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-  <div class="container">
-    <h1>🔍 선택된 병명</h1>
-    <p><strong><%= Name %></strong></p>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">세부 항목 선택</div>
+            <div class="subtitle">선택된 병명: <strong><%= Name %></strong></div>
+          </div>
+          <span class="badge">Details</span>
+        </div>
 
-    <h2>📋 추가 정보 선택</h2>
+        <form onsubmit="submitSelections(); return false;">
+          <label for="severity">중증도</label>
+          <select id="severity">
+            <option value="">선택하세요</option>
+            <option value="low">경증</option>
+            <option value="moderate">중간</option>
+            <option value="severe">중증</option>
+          </select>
 
-    <label for="severity">중증도</label>
-    <select id="severity">
-      <option value="">선택하세요</option>
-      <option value="low">경증</option>
-      <option value="moderate">중간</option>
-      <option value="severe">중증</option>
-    </select>
+          <label for="duration">예상 치료 기간</label>
+          <select id="duration">
+            <option value="">선택하세요</option>
+            <option value="short">1주 이내</option>
+            <option value="medium">1~4주</option>
+            <option value="long">한 달 이상</option>
+          </select>
 
-    <label for="duration">예상 치료 기간</label>
-    <select id="duration">
-      <option value="">선택하세요</option>
-      <option value="short">1주 이내</option>
-      <option value="medium">1~4주</option>
-      <option value="long">한 달 이상</option>
-    </select>
+          <label for="insurance">보험 적용 여부</label>
+          <select id="insurance">
+            <option value="">선택하세요</option>
+            <option value="yes">적용됨</option>
+            <option value="no">미적용</option>
+          </select>
 
-    <label for="insurance">보험 적용 여부</label>
-    <select id="insurance">
-      <option value="">선택하세요</option>
-      <option value="yes">적용됨</option>
-      <option value="no">미적용</option>
-    </select>
+          <label for="treatment">치료 방법</label>
+          <select id="treatment">
+            <option value="">선택하세요</option>
+            <option value="medicine">약물 치료</option>
+            <option value="surgery">수술</option>
+            <option value="therapy">물리 치료</option>
+            <option value="etc">기타</option>
+          </select>
 
-    <label for="treatment">치료 방법</label>
-    <select id="treatment">
-      <option value="">선택하세요</option>
-      <option value="medicine">약물 치료</option>
-      <option value="surgery">수술</option>
-      <option value="therapy">물리 치료</option>
-      <option value="etc">기타</option>
-    </select>
-
-    <button onclick="submitSelections()">다음 단계로</button>
+          <button class="button" type="submit">다음 단계로</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script>

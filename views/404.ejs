@@ -1,54 +1,26 @@
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-      <meta charset="UTF-8">
-      <title>페이지를 찾을 수 없습니다</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link rel="stylesheet" href="/style.css">
-      <style>
-        body {
-          font-family: sans-serif;
-          background: #f9f9f9;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          margin: 0;
-          text-align: center;
-        }
-
-        h1 {
-          font-size: 2em;
-          color: #333;
-          margin-bottom: 10px;
-        }
-
-        p {
-          color: #666;
-          font-size: 1.1em;
-          margin-bottom: 24px;
-        }
-
-        a {
-          display: inline-block;
-          background: #4e73df;
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: bold;
-        }
-
-        a:hover {
-          background: #2c5de5;
-        }
-      </style>
-    </head>
-    <body>
-      <h1 style="font-size: 3em; color: #2c5de5;">404</h1> 
-      <h1>😢 페이지를 찾을 수 없습니다</h1>
-      <p>요청하신 페이지가 존재하지 않거나 이동되었어요.</p>
-      <a href="/">홈으로 돌아가기</a>
-    </body>
-    </html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>404</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="error-hero">
+          <div class="error-illustration">🔎</div>
+          <div class="error-code">404</div>
+          <div class="title">페이지를 찾을 수 없습니다</div>
+          <p class="subtitle">요청하신 페이지가 존재하지 않아요.</p>
+          <div class="footer-actions">
+            <a class="button" href="/">홈으로</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>혈압/혈당 기록</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">혈압/혈당 기록</div>
+            <div class="subtitle">측정값을 입력하세요.</div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" onclick="history.back()" aria-label="뒤로가기">←</button>
+            <a class="icon-btn" href="/dashboard" aria-label="홈">⌂</a>
+            <span class="badge">Vitals</span>
+          </div>
+        </div>
+
+        <form action="/record/pressure" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="split">
+            <div>
+              <label for="systolic">수축기 혈압</label>
+              <input type="number" id="systolic" name="systolic" min="50" max="250" placeholder="예: 120" required />
+            </div>
+            <div>
+              <label for="diastolic">이완기 혈압</label>
+              <input type="number" id="diastolic" name="diastolic" min="30" max="150" placeholder="예: 80" required />
+            </div>
+          </div>
+
+          <label for="glucose">혈당 (mg/dL)</label>
+          <input type="number" id="glucose" name="glucose" min="30" max="400" placeholder="예: 100" />
+
+          <label for="memo">메모</label>
+          <textarea id="memo" name="memo" placeholder="측정 시간이나 상태를 기록하세요."></textarea>
+
+          <button class="button" type="submit">저장</button>
+        </form>
+      </div>
+
+      <div class="card chart-card">
+        <div class="page-header">
+          <div>
+            <div class="title">최근 혈압 추이</div>
+            <div class="subtitle">수축기/이완기 변화를 확인하세요.</div>
+          </div>
+          <span class="badge">Trend</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const chartData = <%- JSON.stringify(chart || { labels: [], systolic: [], diastolic: [] }) %>;
+    const labels = chartData.labels.map(d => new Date(d).toLocaleDateString('ko-KR'));
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '수축기',
+            data: chartData.systolic,
+            borderColor: '#2e6bff',
+            backgroundColor: 'rgba(46,107,255,0.12)',
+            tension: 0.35,
+            fill: false
+          },
+          {
+            label: '이완기',
+            data: chartData.diastolic,
+            borderColor: '#00b894',
+            backgroundColor: 'rgba(0,184,148,0.12)',
+            tension: 0.35,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: false } }
+      }
+    });
+  </script>
+</body>
+</html>

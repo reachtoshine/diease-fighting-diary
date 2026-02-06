@@ -2,160 +2,102 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>dashboard</title>
+  <title>대시보드</title>
   <link rel="stylesheet" href="/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f6f8fc;
-      padding: 0 !important;
-    }
-    .top-bar {
-      background: #4e73df;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      font-size: 1rem;
-    }
-    .menu-btn {
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: -300px;
-      width: 240px;
-      height: 100%;
-      background: #2e3b8d;
-      color: white;
-      padding: 20px;
-      transition: left 0.3s ease;
-      z-index: 1000;
-    }
-    .sidebar.active {
-      left: 0;
-    }
-    .sidebar ul {
-      list-style: none;
-      padding: 0;
-    }
-    .sidebar li {
-      margin: 20px 0;
-    }
-    .sidebar a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .main-content {
-      transition: margin-left 0.3s ease;
-      padding: 20px;
-      max-width: 700px;
-      margin: auto;
-    }
-    .popup {
-      background: #ffe9c9;
-      border-left: 6px solid #ffa726;
-      padding: 16px;
-      margin: 20px 0;
-      border-radius: 8px;
-      font-size: 1rem;
-      color: #444;
-    }
-    .btn-popup {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 10px 20px;
-      background: #ff9800;
-      color: white;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .record-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-top: 20px;
-    }
-    .record-link {
-      flex: 1 1 calc(50% - 16px);
-      background: linear-gradient(135deg, #f8f9ff, #eef1f8);
-      padding: 18px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      text-decoration: none;
-      color: #333;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .record-link:hover {
-      background: #dce6ff;
-      transform: translateY(-2px);
-    }
-    .record-link span {
-      font-size: 1.4em;
-    }
-  </style>
 </head>
 <body>
-
-<div class="sidebar" id="sidebar">
-  <span class="menu-btn" onclick="toggleSidebarr()">&#9776;</span>
-  <ul>
-  <h3>📋 메뉴</h3>
-    <li><a href="/dashboard">🏠 대시보드</a></li>
-    <li><a href="/cancer-info">🧬 암 정보 입력</a></li>
-    <li><a href="/logout">🚪 로그아웃</a></li>
-  </ul>
-</div>
-
-<div class="top-bar">
-  <span class="menu-btn" onclick="toggleSidebar()">&#9776;</span>
-  <span><%= new Date().toLocaleDateString() %></span>
-</div>
-
-<div class="main-content">
-  <% if (showCancerPopup) { %>
-    <div class="popup">
-      <p>🧬 <strong><%= user.nickname %></strong>님, 아직 암 관련 정보를 입력하지 않으셨어요.<br>간단한 정보를 기록해 주세요!</p>
-      <a href="/cancer-info" class="btn-popup">입력하러 가기</a>
+  <div class="sidebar" id="sidebar">
+    <div class="page-header">
+      <div class="title">메뉴</div>
     </div>
-  <% } %>
+    <ul>
+      <li><a href="/dashboard">🏠 대시보드</a></li>
+      <li><a href="/cancer-info">🧬 암 정보 입력</a></li>
+      <li><a href="/logout">🚪 로그아웃</a></li>
+    </ul>
+  </div>
 
-  <section>
-    <h2>📊 오늘의 기록</h2>
-    <div class="record-links">
-      <a class="record-link" href="/record/meal"><span>🍱</span>식사 기록</a>
-      <a class="record-link" href="/record/exercise"><span>🏃‍♂️</span>운동량 기록</a>
-      <a class="record-link" href="/record/bowel"><span>🚽</span>대변 상태</a>
-      <a class="record-link" href="/record/temp"><span>🌡</span>체온</a>
-      <a class="record-link" href="/record/pressure"><span>🩸</span>혈압/혈당</a>
-      <a class="record-link" href="/record/weight"><span>⚖</span>체중</a>
-      <a class="record-link" href="/record/mood"><span>😊</span>기분</a>
-      <a class="record-link" href="/record/pain"><span>💥</span>통증</a>
-      <a class="record-link" href="/record/water"><span>💧</span>물 섭취량</a>
+  <div class="page">
+    <div class="container">
+      <div class="topbar">
+        <span class="menu-btn" onclick="toggleSidebar()">☰</span>
+        <span><%= new Date().toLocaleDateString() %></span>
+      </div>
+
+      <% if (showCancerPopup) { %>
+        <div class="popup">
+          <strong>🧬 <%= user.nickname %>님</strong> 아직 암 관련 정보를 입력하지 않으셨어요.
+          <div class="footer-actions">
+            <a class="button" href="/cancer-info">입력하러 가기</a>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">오늘의 기록</div>
+            <div class="subtitle">오늘 몸 상태를 간단히 기록해요.</div>
+          </div>
+          <span class="badge">케어 로그</span>
+        </div>
+
+        <div class="grid grid-3">
+          <a class="tile" href="/record/meal">
+            <div class="pill">🍱 식사</div>
+            <div class="tile-title">식사 기록</div>
+            <div class="tile-meta">칼로리와 섭취량</div>
+          </a>
+          <a class="tile" href="/record/exercise">
+            <div class="pill">🏃‍♂️ 운동</div>
+            <div class="tile-title">운동량 기록</div>
+            <div class="tile-meta">시간과 강도</div>
+          </a>
+          <a class="tile" href="/record/bowel">
+            <div class="pill">🚽 대변</div>
+            <div class="tile-title">대변 상태</div>
+            <div class="tile-meta">횟수와 상태</div>
+          </a>
+          <a class="tile" href="/record/temp">
+            <div class="pill">🌡 체온</div>
+            <div class="tile-title">체온 기록</div>
+            <div class="tile-meta">오늘의 체온</div>
+          </a>
+          <a class="tile" href="/record/pressure">
+            <div class="pill">🩸 혈압/혈당</div>
+            <div class="tile-title">혈압/혈당</div>
+            <div class="tile-meta">측정값 기록</div>
+          </a>
+          <a class="tile" href="/record/weight">
+            <div class="pill">⚖ 체중</div>
+            <div class="tile-title">체중 기록</div>
+            <div class="tile-meta">몸무게와 변화</div>
+          </a>
+          <a class="tile" href="/record/mood">
+            <div class="pill">😊 기분</div>
+            <div class="tile-title">기분 기록</div>
+            <div class="tile-meta">오늘의 감정</div>
+          </a>
+          <a class="tile" href="/record/pain">
+            <div class="pill">💥 통증</div>
+            <div class="tile-title">통증 기록</div>
+            <div class="tile-meta">강도와 위치</div>
+          </a>
+          <a class="tile" href="/record/water">
+            <div class="pill">💧 수분</div>
+            <div class="tile-title">물 섭취량</div>
+            <div class="tile-meta">하루 섭취량</div>
+          </a>
+        </div>
+      </div>
     </div>
-  </section>
-</div>
+  </div>
 
-<script>
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
-  }
-    function toggleSidebarr() {
-    document.getElementById('sidebar').classList.remove('active');
-  }
-</script>
-
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+  </script>
 </body>
 </html>

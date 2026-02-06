@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>물 섭취량</title>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+      <div class="card">
+        <div class="page-header">
+          <div>
+            <div class="title">물 섭취량 기록</div>
+            <div class="subtitle">오늘 마신 물의 양을 기록하세요.</div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" type="button" onclick="history.back()" aria-label="뒤로가기">←</button>
+            <a class="icon-btn" href="/dashboard" aria-label="홈">⌂</a>
+            <span class="badge">Hydration</span>
+          </div>
+        </div>
+
+        <form action="/record/water" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="amount">섭취량 (ml)</label>
+          <input type="number" id="amount" name="amount" min="0" placeholder="예: 1500" required />
+
+          <label for="memo">메모</label>
+          <textarea id="memo" name="memo" placeholder="특이사항이 있으면 기록하세요."></textarea>
+
+          <button class="button" type="submit">저장</button>
+        </form>
+      </div>
+
+      <div class="card chart-card">
+        <div class="page-header">
+          <div>
+            <div class="title">최근 물 섭취 추이</div>
+            <div class="subtitle">섭취량 변화를 그래프로 확인하세요.</div>
+          </div>
+          <span class="badge">Trend</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const chartData = <%- JSON.stringify(chart || { labels: [], values: [] }) %>;
+    const labels = chartData.labels.map(d => new Date(d).toLocaleDateString('ko-KR'));
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '물 섭취량(ml)',
+          data: chartData.values,
+          backgroundColor: 'rgba(46,107,255,0.25)',
+          borderColor: '#2e6bff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  </script>
+</body>
+</html>

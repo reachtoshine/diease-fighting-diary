@@ -6,7 +6,7 @@ const extraOptions = document.getElementById("extraOptions");
 let cancerList = [];
 
 // JSON 로드
-fetch("cancers.json")
+fetch("/cancers.json")
   .then(res => res.json())
   .then(data => {
     cancerList = data;
