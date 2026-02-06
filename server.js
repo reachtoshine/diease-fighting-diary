@@ -17,6 +17,9 @@ dotenv.config();
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
+// Render 등 프록시 환경에서 secure 쿠키/CSRF 정상 동작을 위해 신뢰 설정
+app.set('trust proxy', 1);
+
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
