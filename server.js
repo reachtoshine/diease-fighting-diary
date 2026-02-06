@@ -18,7 +18,7 @@ app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
 // Render 등 프록시 환경에서 secure 쿠키/CSRF 정상 동작을 위해 신뢰 설정
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
@@ -83,6 +83,15 @@ const handleValidation = (req, res, next) => {
       return res.status(400).json({ error: 'Invalid request' });
     }
     return res.status(400).render('400.ejs');
+  }
+  next();
+};
+
+// 로그인 입력은 사용자 경험 우선 (400 대신 로그인 오류로 처리)
+const handleLoginValidation = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.redirect('/login?error=invalid');
   }
   next();
 };
@@ -257,10 +266,10 @@ app.get('/logout', (req, res, next) => {
 
 app.post('/login',
   [
-    body('username').isString().isLength({ min: 2, max: 50 }).custom(isSafeString).trim(),
-    body('password').isString().isLength({ min: 4, max: 100 })
+    body('username').isString().isLength({ min: 1, max: 50 }).custom(isSafeString).trim(),
+    body('password').isString().isLength({ min: 1, max: 100 })
   ],
-  handleValidation,
+  handleLoginValidation,
   (req, res, next) => {
     passport.authenticate('local', (error, user) => {
       if (error) return next(error);
