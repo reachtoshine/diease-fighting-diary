@@ -1,9 +1,10 @@
 {
   "name": "diease-fighting-diary",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -35,5 +36,8 @@
     "passport-local": "^1.0.0",
     "passport-naver": "^1.0.6",
     "xml2js": "^0.6.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
