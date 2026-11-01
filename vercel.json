@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "express",
+  "regions": ["icn1"],
+  "functions": {
+    "server.js": {
+      "maxDuration": 30,
+      "includeFiles": "views/**"
+    }
+  }
+}

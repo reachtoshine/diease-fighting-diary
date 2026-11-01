@@ -34,7 +34,8 @@ function matches(doc, filter) {
   });
 }
 
-async function createTestServer(t, { records = {}, upstream, now = '2026-11-01T16:00:00.000Z' } = {}) {
+async function createTestServer(t, { records = {}, upstream, databaseConnect = async () => {}, now = '2026-11-01T16:00:00.000Z' } = {}) {
+  let connectionAttempts = 0;
   const collections = {
     users: [{ _id: userId, username: 'reader', provider: 'local', password: passwordHash,
       nickname: '독자', email: 'reader@example.com' }],
@@ -73,7 +74,7 @@ async function createTestServer(t, { records = {}, upstream, now = '2026-11-01T1
       if (name === 'dotenv') return { config() {} };
       if (name === 'connect-mongo') return { create() { return undefined; } };
       if (name === 'express-session') return options => session({ ...options, store: new session.MemoryStore() });
-      if (name === 'mongodb') return { ObjectId, MongoClient: class { async connect() { return { db: () => db }; } } };
+      if (name === 'mongodb') return { ObjectId, MongoClient: class { async connect() { connectionAttempts++; await databaseConnect(connectionAttempts); return { db: () => db }; } } };
       return localRequire(name);
     },
     __dirname: root,
@@ -111,11 +112,15 @@ async function createTestServer(t, { records = {}, upstream, now = '2026-11-01T1
     const res = await request('/login', { method: 'POST', body: { _csrf: token, username: 'reader', password: 'correct-password' } });
     if (res.status !== 302 || res.location === '/login?error=invalid') throw new Error(`Login failed: ${res.status} ${res.location}`);
   }
-  function verify(strategy, ...args) {
+  async function verify(strategy, ...args) {
+    await request('/login');
     return new Promise((resolve, reject) => passport._strategy(strategy)._verify(...args, (err, user) => err ? reject(err) : resolve(user)));
   }
-  const deserialize = value => new Promise((resolve, reject) => passport.deserializeUser(value, (err, user) => err ? reject(err) : resolve(user)));
-  return { app, collections, request, form, login, verify, deserialize, userId };
+  const deserialize = async value => {
+    await request('/login');
+    return new Promise((resolve, reject) => passport.deserializeUser(value, (err, user) => err ? reject(err) : resolve(user)));
+  };
+  return { app, collections, request, form, login, verify, deserialize, userId, exportedApp: context.module.exports, get connectionAttempts() { return connectionAttempts; } };
 }
 
 module.exports = { createTestServer, userId, passwordHash };

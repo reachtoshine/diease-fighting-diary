@@ -24,22 +24,42 @@ app.use(express.static(__dirname + '/public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 세션/쿠키 보안 강화
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave : false,
-  saveUninitialized : false,
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 365,
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
-  },
-  store: MongoStore.create({
-    mongoUrl : process.env.MONGODB_URI,
-    dbName: 'CancerDiary',
-  })
-}));
+// A warm Vercel instance shares one small pool between records and sessions.
+// Initialize on the first request so importing the handler never starts a listener.
+let db;
+let initialization;
+const mongoClient = new MongoClient(process.env.MONGODB_URI, {
+  maxPoolSize: 5,
+  serverSelectionTimeoutMS: 8000
+});
+
+const initializeSession = () => {
+  if (!initialization) {
+    initialization = mongoClient.connect().then(client => {
+      db = client.db('CancerDiary');
+      return session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+          maxAge: 1000 * 60 * 60 * 24 * 365,
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production'
+        },
+        store: MongoStore.create({ client, dbName: 'CancerDiary' })
+      });
+    }).catch(err => {
+      initialization = undefined;
+      throw err;
+    });
+  }
+  return initialization;
+};
+
+app.use((req, res, next) => {
+  initializeSession().then(middleware => middleware(req, res, next)).catch(next);
+});
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -200,19 +220,6 @@ passport.deserializeUser(async (user, done) => {
   } catch (err) {
     process.nextTick(() => done(err));
   }
-});
-
-let db;
-const url = process.env.MONGODB_URI;
-new MongoClient(url).connect().then((client) => {
-  console.log('DB연결성공');
-  db = client.db('CancerDiary');
-
-  app.listen(port, '0.0.0.0', () => {
-    console.log('Server is running on http://localhost:' + port);
-  });
-}).catch((err) => {
-  console.log(err);
 });
 
 app.get('/', (req, res) => {
@@ -698,3 +705,11 @@ app.use((req, res) => {
   res.status(404).render('404.ejs');
 });
 
+
+// Vercel imports the handler; npm start still runs a normal HTTP server.
+module.exports = app;
+if (require.main === module) {
+  app.listen(port, '0.0.0.0', () => {
+    console.log('Server is running on http://localhost:' + port);
+  });
+}

@@ -258,3 +258,29 @@ test('unambiguous legacy username sessions keep working', async t => {
   const s=await createTestServer(t);
   assert.equal(String((await s.deserialize({id:'reader',username:'reader'}))._id),String(userId));
 });
+
+test('server exports the Express handler for Vercel without opening a listener', async t => {
+  const s=await createTestServer(t);
+  assert.equal(s.exportedApp,s.app);
+  assert.equal(s.connectionAttempts,0);
+});
+
+test('first serverless requests await and share one database initialization', async t => {
+  let connected=false;
+  const s=await createTestServer(t,{databaseConnect:async()=>{
+    await new Promise(resolve=>setTimeout(resolve,50));connected=true;
+  }});
+  const pages=await Promise.all([s.request('/login'),s.request('/register')]);
+  assert.ok(connected);
+  assert.equal(s.connectionAttempts,1);
+  assert.deepEqual(pages.map(p=>p.status),[200,200]);
+});
+
+test('a transient initialization failure produces an error and retries on the next request', async t => {
+  const s=await createTestServer(t,{databaseConnect:async attempt=>{if(attempt===1)throw new Error('test unavailable');}});
+  const first=await s.request('/login');
+  assert.equal(first.status,500);
+  const next=await s.request('/login');
+  assert.equal(next.status,200);
+  assert.equal(s.connectionAttempts,2);
+});
