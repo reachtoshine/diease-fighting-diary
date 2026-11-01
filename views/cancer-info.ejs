@@ -18,69 +18,58 @@
           <span class="badge">Care Profile</span>
         </div>
 
-        <div class="split">
-          <div>
-            <label for="searchInput">암 종류 검색</label>
-            <input type="text" id="searchInput" placeholder="암 종류를 입력하세요..." />
+        <form action="/cancer-info/confirm" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="split">
+            <div>
+              <label for="searchInput">암 종류 검색</label>
+              <input type="text" id="searchInput" name="cancer" required placeholder="암 종류를 입력하세요..." />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button id="editBtn" type="button" class="button secondary hidden">✏️ 수정</button>
+            </div>
           </div>
-          <div>
-            <label>&nbsp;</label>
-            <button id="editBtn" class="button secondary hidden">✏️ 수정</button>
+
+          <ul id="results" class="helper"></ul>
+
+          <div id="extraOptions" class="hidden">
+            <label for="stageSelect">기수 선택</label>
+            <select id="stageSelect" name="stage" required>
+              <option value="">선택하세요</option>
+              <option value="1">1기</option>
+              <option value="2">2기</option>
+              <option value="3">3기</option>
+              <option value="4">4기</option>
+              <option value="none">모름</option>
+            </select>
+
+            <label for="Susul">수술 여부</label>
+            <select id="Susul" name="susul" required>
+              <option value="">선택하세요</option>
+              <option value="before">수술 전</option>
+              <option value="after">수술 후</option>
+            </select>
+
+            <label for="Hangam">항암 여부</label>
+            <select id="Hangam" name="hangam" required>
+              <option value="">선택하세요</option>
+              <option value="hangam-first">항암 있음 - 항암 → 수술</option>
+              <option value="hangam-later">항암 있음 - 수술 → 항암</option>
+              <option value="none">항암 없음</option>
+              <option value="unknown">모름</option>
+            </select>
           </div>
-        </div>
 
-        <ul id="results" class="helper"></ul>
-
-        <div id="extraOptions" class="hidden">
-          <label for="stageSelect">기수 선택</label>
-          <select id="stageSelect">
-            <option value="">선택하세요</option>
-            <option value="1">1기</option>
-            <option value="2">2기</option>
-            <option value="3">3기</option>
-            <option value="4">4기</option>
-            <option value="none">모름</option>
-          </select>
-
-          <label for="Susul">수술 여부</label>
-          <select id="Susul">
-            <option value="">선택하세요</option>
-            <option value="before">수술 전</option>
-            <option value="after">수술 후</option>
-          </select>
-
-          <label for="Hangam">항암 여부</label>
-          <select id="Hangam">
-            <option value="">선택하세요</option>
-            <option value="hangam-first">항암 있음 - 항암 → 수술</option>
-            <option value="hangam-later">항암 있음 - 수술 → 항암</option>
-            <option value="none">항암 없음</option>
-            <option value="unknown">모름</option>
-          </select>
-        </div>
-
-        <div class="footer-actions">
-          <button id="nextBtn" class="button" onclick="checkSelections()">다음 단계로</button>
-        </div>
+          <div class="footer-actions">
+            <button id="nextBtn" class="button" type="submit">다음 단계로</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 
-  <script>
-    function checkSelections() {
-      const searchInput = document.getElementById('searchInput').value.trim();
-      const stageSelect = document.getElementById('stageSelect').value;
-      const susulSelect = document.getElementById('Susul').value;
-      const hangamSelect = document.getElementById('Hangam').value;
-
-      if (stageSelect && susulSelect && hangamSelect) {
-        window.location.href = '/cancer-info/confirm?cancer=' + searchInput +
-          '&stage=' + stageSelect + '&susul=' + susulSelect + '&hangam=' + hangamSelect;
-      } else {
-        alert('모든 항목을 선택해주세요.');
-      }
-    }
-  </script>
   <script src="/main.js"></script>
 </body>
 </html>
+

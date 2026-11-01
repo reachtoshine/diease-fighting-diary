@@ -70,13 +70,18 @@
       try {
         const res = await fetch(`/api/food?k=${encodeURIComponent(foodName)}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '음식 검색 실패');
 
         if (data.length && data[0].name) {
           resultBox.innerText = `${data.length}개의 결과가 있습니다. 모든 음식의 칼로리는 100g 기준입니다.`;
           searchResults = data;
-          foodSelect.innerHTML = data.map((item, idx) => {
-            return `<option value="${idx}">${item.name.replace(/_/g, " : ")} ${item.kcal}kcal</option>`;
-          }).join('');
+          foodSelect.replaceChildren();
+          data.forEach((item, idx) => {
+            const option = document.createElement('option');
+            option.value = idx;
+            option.textContent = `${item.name.replace(/_/g, ' : ')} ${item.kcal}kcal`;
+            foodSelect.appendChild(option);
+          });
           selectionBox.style.display = 'block';
         } else {
           resultBox.innerText = '검색 결과가 없습니다';
@@ -94,12 +99,16 @@
       const selected = searchResults[selectedIndex];
       const grams = parseFloat(weightInput.value);
 
-      if (!selected || !grams || grams <= 0) {
+      if (!selected || !Number.isFinite(grams) || grams <= 0 || grams > 100000) {
         alert('음식과 섭취량을 정확히 입력해주세요.');
         return;
       }
 
       const realKcal = Math.round((Number(selected.kcal) * grams) / 100);
+      if (!Number.isFinite(realKcal) || realKcal < 0 || realKcal > 100000) {
+        alert('섭취량을 확인해주세요.');
+        return;
+      }
       items.push({ name: selected.name, kcal: realKcal, weight: grams });
 
       const li = document.createElement('li');
@@ -112,3 +121,4 @@
   </script>
 </body>
 </html>
+

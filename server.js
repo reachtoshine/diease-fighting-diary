@@ -1,7 +1,5 @@
 const express = require('express');
-const ejs = require('ejs');
 const app = express();
-const port = 4000;
 const { MongoClient, ObjectId } = require('mongodb');
 const session = require('express-session');
 const passport = require('passport');
@@ -13,6 +11,8 @@ const dotenv = require('dotenv');
 const csrf = require('csurf');
 const { body, param, query, validationResult } = require('express-validator');
 dotenv.config();
+const port = Number(process.env.PORT) || 4000;
+const { mealWindow, summarizeMeals, parseMealItems } = require('./lib/meal-records');
 
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
@@ -44,12 +44,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// CSRF 보호 (API 라우트 제외)
-const csrfProtection = csrf();
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  return csrfProtection(req, res, next);
-});
+// GET 검색은 그대로 허용하고, 상태를 바꾸는 요청은 모두 보호합니다.
+app.use(csrf());
 
 app.use((req, res, next) => {
   if (typeof req.csrfToken === 'function') {
@@ -64,13 +60,6 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
 const requireLogin = (req, res, next) => {
   if (!req.user) return res.redirect('/login');
   next();
-};
-
-// NoSQL Injection 방지를 위한 문자열 검사
-const isSafeString = (value) => {
-  if (typeof value !== 'string') return false;
-  if (value.includes('$') || value.includes('.')) return false;
-  return true;
 };
 
 const sanitizeText = (value) => value.trim();
@@ -136,12 +125,15 @@ const stageTypes = ['1', '2', '3', '4', 'none'];
 
 passport.use(new LocalStrategy(async (inputUsername, inputPassword, cb) => {
   try {
-    if (!isSafeString(inputUsername)) {
+    if (typeof inputUsername !== 'string') {
       return cb(null, false, { message: 'Invalid input' });
     }
     const username = sanitizeText(inputUsername);
-    const result = await db.collection('users').findOne({ username });
-    if (!result) {
+    const result = await db.collection('users').findOne({
+      username,
+      $or: [{ provider: 'local' }, { provider: { $exists: false } }]
+    });
+    if (!result || typeof result.password !== 'string') {
       return cb(null, false, { message: '아이디 DB에 없음' });
     }
     const ok = await bcrypt.compare(inputPassword, result.password);
@@ -160,6 +152,7 @@ passport.use(new NaverStrategy({
   try {
     const userData = {
       username: profile.id,
+      providerId: profile.id,
       nickname: profile.displayName,
       email: profile._json.email,
       profileImage: profile._json.profile_image,
@@ -167,7 +160,13 @@ passport.use(new NaverStrategy({
       provider: 'naver'
     };
 
-    let user = await db.collection('users').findOne({ username: userData.username });
+    const user = await db.collection('users').findOne({
+      provider: 'naver',
+      $or: [
+        { providerId: profile.id },
+        { username: profile.id, providerId: { $exists: false } }
+      ]
+    });
     if (!user) {
       // 새 유저면 DB에 저장
       await db.collection('users').insertOne(userData);
@@ -192,8 +191,10 @@ passport.deserializeUser(async (user, done) => {
     let result = null;
     if (ObjectId.isValid(user.id)) {
       result = await db.collection('users').findOne({ _id: new ObjectId(user.id) });
-    } else if (isSafeString(user.id)) {
-      result = await db.collection('users').findOne({ username: sanitizeText(user.id) });
+    } else if (typeof user.id === 'string') {
+      // 오래된 세션에는 provider가 없으므로 계정이 하나일 때만 복구합니다.
+      const candidates = await db.collection('users').find({ username: sanitizeText(user.id) }).limit(2).toArray();
+      result = candidates.length === 1 ? candidates[0] : null;
     }
     process.nextTick(() => done(null, result));
   } catch (err) {
@@ -215,14 +216,14 @@ new MongoClient(url).connect().then((client) => {
 });
 
 app.get('/', (req, res) => {
-  if (req.user) return res.redirect('/home');
+  if (req.user) return res.redirect('/dashboard');
   return res.redirect('/login');
 });
 
 app.get('/next',
   [
-    query('Code').optional().isString().custom(isSafeString),
-    query('Name').optional().isString().custom(isSafeString)
+    query('Code').optional().isString(),
+    query('Name').optional().isString()
   ],
   handleValidation,
   (req, res) => {
@@ -238,7 +239,7 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/login',
-  [ query('error').optional().isString().custom(isSafeString) ],
+  [ query('error').optional().isString() ],
   handleValidation,
   (req, res) => {
     if (req.user) return res.redirect('/dashboard');
@@ -266,7 +267,7 @@ app.get('/logout', (req, res, next) => {
 
 app.post('/login',
   [
-    body('username').isString().isLength({ min: 1, max: 50 }).custom(isSafeString).trim(),
+    body('username').isString().bail().trim().isLength({ min: 1, max: 50 }),
     body('password').isString().isLength({ min: 1, max: 100 })
   ],
   handleLoginValidation,
@@ -284,11 +285,12 @@ app.post('/login',
 
 app.post('/register',
   [
-    body('username').isString().isLength({ min: 2, max: 50 }).custom(isSafeString).trim(),
+    body('username').isString().bail().trim().isLength({ min: 2, max: 50 }),
     body('password').isString().isLength({ min: 6, max: 100 }),
+    body('confirmPassword').isString().bail().custom((value, { req }) => value === req.body.password),
     body('email').isEmail().normalizeEmail(),
-    body('nickname').isString().isLength({ min: 1, max: 30 }).custom(isSafeString).trim(),
-    body('age').isString().isLength({ min: 1, max: 10 }).custom(isSafeString)
+    body('nickname').isString().bail().trim().isLength({ min: 1, max: 30 }),
+    body('age').isString().bail().trim().isLength({ min: 1, max: 10 })
   ],
   handleValidation,
   asyncHandler(async (req, res) => {
@@ -297,7 +299,10 @@ app.post('/register',
     const nickname = sanitizeText(req.body.nickname);
     const age = sanitizeText(req.body.age);
 
-    const result = await db.collection('users').findOne({ username });
+    const result = await db.collection('users').findOne({
+      username,
+      $or: [{ provider: 'local' }, { provider: { $exists: false } }]
+    });
     if (!result) {
       const hash = await bcrypt.hash(req.body.password, 10);
       await db.collection('users').insertOne({
@@ -345,12 +350,15 @@ app.get('/cancer-info', asyncHandler(async (req, res) => {
   res.render('cancer-info.ejs', { user: req.user });
 }));
 
-app.get('/cancer-info/confirm',
+app.get('/cancer-info/confirm', requireLogin, (req, res) => res.redirect('/cancer-info'));
+
+app.post('/cancer-info/confirm',
+  requireLogin,
   [
-    query('cancer').isString().isLength({ min: 1, max: 50 }).custom(isSafeString),
-    query('stage').isIn(stageTypes),
-    query('susul').isIn(susulTypes),
-    query('hangam').isIn(hangamTypes),
+    body('cancer').isString().bail().trim().isLength({ min: 1, max: 50 }),
+    body('stage').isIn(stageTypes),
+    body('susul').isIn(susulTypes),
+    body('hangam').isIn(hangamTypes),
   ],
   handleValidation,
   asyncHandler(async (req, res) => {
@@ -359,10 +367,10 @@ app.get('/cancer-info/confirm',
     const userdata = await db.collection('userdata').findOne({ userId: userId });
     if (userdata) return res.redirect('/dashboard');
 
-    const cancer = sanitizeText(req.query.cancer);
-    const stage = req.query.stage;
-    const operation = req.query.susul;
-    const hangam = req.query.hangam;
+    const cancer = sanitizeText(req.body.cancer);
+    const stage = req.body.stage;
+    const operation = req.body.susul;
+    const hangam = req.body.hangam;
 
     await db.collection('userdata').insertOne({
       userId: userId,
@@ -375,76 +383,38 @@ app.get('/cancer-info/confirm',
   })
 );
 
-app.get('/record/meal', asyncHandler(async (req, res) => {
-  if (!req.user) return res.redirect('/login');
-  const userId = req.user._id;
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
-
+app.get('/record/meal', requireLogin, asyncHandler(async (req, res) => {
+  const window = mealWindow(new Date());
   const records = await db.collection('mealRecords').find({
-    userId: userId,
-    date: { $gte: todayStart, $lte: todayEnd }
-  }).toArray();
-
-  const kcalByMeal = {};
-  for (const r of records) {
-    kcalByMeal[r.mealType] = r.totalKcal;
-  }
-
-  const recentMealRecords = await db.collection('mealRecords')
-    .find({ userId: userId })
-    .sort({ date: -1 })
-    .limit(200)
-    .toArray();
-
-  const dailyTotals = new Map();
-  for (const r of recentMealRecords) {
-    const key = new Date(r.date).toISOString().slice(0, 10);
-    const prev = dailyTotals.get(key) || 0;
-    dailyTotals.set(key, prev + (r.totalKcal || 0));
-  }
-
-  const sortedDays = Array.from(dailyTotals.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-7);
-
-  const mealChart = {
-    labels: sortedDays.map(([day]) => day),
-    values: sortedDays.map(([, total]) => total)
-  };
-
-  res.render('meal.ejs', {
-    user: req.user,
-    kcalByMeal,
-    mealChart
-  });
+    userId: req.user._id,
+    date: { $gte: window.start, $lt: window.end }
+  }, { projection: { date: 1, mealType: 1, totalKcal: 1 } }).toArray();
+  res.render('meal.ejs', { user: req.user, ...summarizeMeals(records, window) });
 }));
 
 app.get('/meal/:mealType',
   [
     param('mealType').isIn(mealTypes),
-    query('korean').optional().isString().isLength({ min: 1, max: 20 }).custom(isSafeString)
+    query('korean').optional().isString().bail().trim().isLength({ min: 1, max: 20 })
   ],
   handleValidation,
   (req, res) => {
     if (!req.user) return res.redirect('/login');
     const mealType = req.params.mealType;
-    const mealTypeName = decodeURIComponent(req.query.korean || '');
+    const mealTypeName = req.query.korean || '';
     res.render('meal-input.ejs', { mealType, mealTypeName });
   }
 );
 
 app.get('/api/food',
   [
-    // 외부 API 입력값 화이트리스트/길이 제한
-    query('k').isString().isLength({ min: 1, max: 30 }).matches(/^[a-zA-Z0-9가-힣\s]+$/).trim()
+    // 검색어는 문자열/길이를 검사하고 외부 URL에는 인코딩해서 전달합니다.
+    query('k').isString().bail().trim().isLength({ min: 1, max: 30 })
   ],
   handleFoodApiValidation,
   asyncHandler(async (req, res) => {
     try {
-      const q = req.query.k;
+      const q = req.query.k.trim();
       const apiKey = process.env.FOOD_API_KEY;
       const url = `https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo02/getFoodNtrCpntDbInq02` +
         `?serviceKey=${apiKey}` +
@@ -452,18 +422,32 @@ app.get('/api/food',
         `&type=json` +
         `&FOOD_NM_KR=${encodeURIComponent(q)}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error('Food API HTTP failure');
       const data = await response.json();
-      const json = data.body.items.map(item => {
+      if (!data.body) throw new Error('Invalid food API response');
+      const resultCode = data.header?.resultCode;
+      if (resultCode != null && !['00', '0'].includes(String(resultCode))) {
+        throw new Error('Food API application failure');
+      }
+      let items = data.body.items;
+      const emptyResult = data.body.totalCount != null && String(data.body.totalCount) === '0';
+      if ((items == null || items === '') && emptyResult) items = [];
+      if (!Array.isArray(items)) throw new Error('Invalid food API items');
+      const json = items.filter(item => item && typeof item.FOOD_NM_KR === 'string' &&
+        item.AMT_NUM1 != null && String(item.AMT_NUM1).trim() !== '' &&
+        Number.isFinite(Number(item.AMT_NUM1)) && Number(item.AMT_NUM1) >= 0).map(item => {
+        const serving = Number(String(item.SERVING_SIZE || '').replace(/g$/i, '').trim());
         return {
           name: item.FOOD_NM_KR,
-          kcal: parseInt(item.AMT_NUM1, 10),
-          serve: item.SERVING_SIZE ? Number(item.SERVING_SIZE.replace('g', '')) : null
+          kcal: Number(item.AMT_NUM1),
+          serve: Number.isFinite(serving) && serving > 0 ? serving : null
         };
       });
       res.json(json);
     } catch (err) {
-      res.status(500).json({ error: '식약처 API 요청 오류' });
+      const status = err.name === 'TimeoutError' || err.name === 'AbortError' ? 504 : 502;
+      res.status(status).json({ error: '식약처 API 요청 오류' });
     }
   })
 );
@@ -471,7 +455,7 @@ app.get('/api/food',
 app.post('/record/meal/:mealType',
   [
     param('mealType').isIn(mealTypes),
-    body('items').isString().isLength({ min: 2, max: 5000 })
+    body('items').isString().bail().trim().isLength({ min: 2, max: 5000 })
   ],
   handleValidation,
   asyncHandler(async (req, res) => {
@@ -480,18 +464,12 @@ app.post('/record/meal/:mealType',
     const mealType = req.params.mealType;
     const itemsRaw = req.body.items;
 
-    let items;
+    let safeItems;
     try {
-      items = JSON.parse(itemsRaw);
+      safeItems = parseMealItems(itemsRaw);
     } catch (err) {
       return res.status(400).render('400.ejs');
     }
-    if (!Array.isArray(items)) return res.status(400).render('400.ejs');
-    const safeItems = items.map((item) => ({
-      name: typeof item.name === 'string' ? item.name.slice(0, 50) : '',
-      kcal: Number(item.kcal) || 0,
-      weight: Number(item.weight) || 0
-    }));
     const totalKcal = safeItems.reduce((sum, item) => sum + (item.kcal || 0), 0);
 
     const record = {
@@ -507,93 +485,34 @@ app.post('/record/meal/:mealType',
   })
 );
 
-app.get('/record/exercise', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('exerciseRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => r.duration || 0)
-  };
-  res.render('exercise.ejs', { user: req.user, chart });
-}));
+const recordCharts = [
+  { type: 'exercise', values: { values: r => r.duration || 0 } },
+  { type: 'bowel', values: { values: r => r.count || 0 } },
+  { type: 'temp', values: { values: r => r.temperature || 0 } },
+  { type: 'pressure', values: { systolic: r => r.systolic || 0, diastolic: r => r.diastolic || 0 } },
+  { type: 'weight', values: { values: r => r.weight || 0 } },
+  { type: 'mood', values: { values: r => moodToScore(r.mood) } },
+  { type: 'pain', values: { values: r => r.level || 0 } },
+  { type: 'water', values: { values: r => r.amount || 0 } }
+];
 
-app.get('/record/bowel', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('bowelRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => r.count || 0)
-  };
-  res.render('bowel.ejs', { user: req.user, chart });
-}));
+for (const { type, values } of recordCharts) {
+  app.get(`/record/${type}`, requireLogin, asyncHandler(async (req, res) => {
+    const recent = await getRecentRecords(`${type}Records`, req.user._id);
+    const chart = { labels: recent.map(r => r.date) };
+    for (const [key, select] of Object.entries(values)) chart[key] = recent.map(select);
+    res.render(`${type}.ejs`, { user: req.user, chart });
+  }));
+}
 
-app.get('/record/temp', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('tempRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => r.temperature || 0)
-  };
-  res.render('temp.ejs', { user: req.user, chart });
-}));
-
-app.get('/record/pressure', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('pressureRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    systolic: recent.map(r => r.systolic || 0),
-    diastolic: recent.map(r => r.diastolic || 0)
-  };
-  res.render('pressure.ejs', { user: req.user, chart });
-}));
-
-app.get('/record/weight', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('weightRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => r.weight || 0)
-  };
-  res.render('weight.ejs', { user: req.user, chart });
-}));
-
-app.get('/record/mood', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('moodRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => moodToScore(r.mood))
-  };
-  res.render('mood.ejs', { user: req.user, chart });
-}));
-
-app.get('/record/pain', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('painRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => r.level || 0)
-  };
-  res.render('pain.ejs', { user: req.user, chart });
-}));
-
-app.get('/record/water', requireLogin, asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const recent = await getRecentRecords('waterRecords', userId);
-  const chart = {
-    labels: recent.map(r => r.date),
-    values: recent.map(r => r.amount || 0)
-  };
-  res.render('water.ejs', { user: req.user, chart });
-}));
+const memoValidation = () => body('memo').optional({ checkFalsy: true }).isString().bail().trim().isLength({ max: 200 });
 
 app.post('/record/exercise',
   [
-    body('type').isString().isLength({ min: 1, max: 30 }).custom(isSafeString).trim(),
+    body('type').isString().bail().trim().isLength({ min: 1, max: 30 }),
     body('duration').isInt({ min: 0, max: 600 }).toInt(),
     body('intensity').isIn(intensityTypes),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -615,7 +534,7 @@ app.post('/record/bowel',
   [
     body('status').isIn(bowelStatusTypes),
     body('count').isInt({ min: 0, max: 20 }).toInt(),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -635,7 +554,7 @@ app.post('/record/bowel',
 app.post('/record/temp',
   [
     body('temperature').isFloat({ min: 30, max: 45 }).toFloat(),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -656,7 +575,7 @@ app.post('/record/pressure',
     body('systolic').isInt({ min: 50, max: 250 }).toInt(),
     body('diastolic').isInt({ min: 30, max: 150 }).toInt(),
     body('glucose').optional({ checkFalsy: true }).isInt({ min: 30, max: 400 }).toInt(),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -678,7 +597,7 @@ app.post('/record/weight',
   [
     body('weight').isFloat({ min: 0, max: 300 }).toFloat(),
     body('bodyFat').optional({ checkFalsy: true }).isFloat({ min: 0, max: 80 }).toFloat(),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -687,7 +606,7 @@ app.post('/record/weight',
     await db.collection('weightRecords').insertOne({
       userId,
       weight: req.body.weight,
-      bodyFat: req.body.bodyFat || null,
+      bodyFat: req.body.bodyFat === '' ? null : (req.body.bodyFat ?? null),
       memo: sanitizeText(req.body.memo || ''),
       date: new Date()
     });
@@ -699,7 +618,7 @@ app.post('/record/mood',
   [
     body('mood').isIn(moodTypes),
     body('energy').isIn(energyTypes),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -719,8 +638,8 @@ app.post('/record/mood',
 app.post('/record/pain',
   [
     body('level').isInt({ min: 0, max: 10 }).toInt(),
-    body('location').isString().isLength({ min: 1, max: 30 }).custom(isSafeString).trim(),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    body('location').isString().bail().trim().isLength({ min: 1, max: 30 }),
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -740,7 +659,7 @@ app.post('/record/pain',
 app.post('/record/water',
   [
     body('amount').isInt({ min: 0, max: 10000 }).toInt(),
-    body('memo').optional({ checkFalsy: true }).isString().isLength({ max: 200 }).custom(isSafeString)
+    memoValidation()
   ],
   handleValidation,
   requireLogin,
@@ -755,12 +674,6 @@ app.post('/record/water',
     res.redirect('/record/water');
   })
 );
-
-app.get('/123', (req, res, next) => {
-  const err = new Error('123');
-  err.statusCode = 429;
-  next(err);
-});
 
 // CSRF 에러 처리
 app.use((err, req, res, next) => {
@@ -777,10 +690,11 @@ app.use((err, req, res, next) => {
   if (status === 401) return res.status(401).render('401.ejs');
   if (status === 403) return res.status(403).render('403.ejs');
   if (status === 429) return res.status(429).render('429.ejs');
-  if (status >= 400 && status < 500) return res.status(status).render('4xx.ejs');
+  if (status >= 400 && status < 500) return res.status(status).render('400.ejs');
   return res.status(500).render('500.ejs');
 });
 
 app.use((req, res) => {
   res.status(404).render('404.ejs');
 });
+
